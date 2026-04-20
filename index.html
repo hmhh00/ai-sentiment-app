@@ -3,1346 +3,847 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hamza AI — محلل المشاعر الذكي</title>
+<title>Hamza AI — محلل المشاعر</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --bg:#07080d;--surface:#0e0f18;--surface2:#161722;--surface3:#1d1e2c;
-  --border:rgba(255,255,255,0.06);--border-md:rgba(255,255,255,0.11);--border-hi:rgba(255,255,255,0.2);
-  --text:#eceaf4;--muted:#6e6c7e;--dim:#353444;
-  --accent:#00e5ff;--accent-dim:rgba(0,229,255,0.1);--accent-glow:rgba(0,229,255,0.2);
-  --pos:#22d55a;--pos-bg:rgba(34,213,90,0.08);--pos-border:rgba(34,213,90,0.22);
-  --neg:#ff4d6d;--neg-bg:rgba(255,77,109,0.08);--neg-border:rgba(255,77,109,0.22);
-  --neu:#8892b0;--neu-bg:rgba(136,146,176,0.08);--neu-border:rgba(136,146,176,0.18);
-  --warn:#ffb703;
-  --font:'IBM Plex Sans Arabic',sans-serif;
-  --mono:'JetBrains Mono',monospace;
-  --r:14px;--r-sm:9px;--r-xs:5px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  font-family:var(--font);background:var(--bg);color:var(--text);
-  min-height:100vh;display:flex;flex-direction:column;align-items:center;
-  padding:32px 16px 64px;position:relative;overflow-x:hidden;
-}
-
-/* ── scanline overlay ── */
-body::before{
-  content:'';position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,0.012) 2px,rgba(0,229,255,0.012) 4px);
-  pointer-events:none;z-index:0;
-}
-/* ── radial glow ── */
-body::after{
-  content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50%);
-  width:900px;height:600px;
-  background:radial-gradient(ellipse at center,rgba(0,229,255,0.055) 0%,transparent 65%);
-  pointer-events:none;z-index:0;
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #181820;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.15);
+  --text: #f0eee8;
+  --text-muted: #7a7880;
+  --text-dim: #44424e;
+  --accent: #c8f135;
+  --accent-dim: rgba(200,241,53,0.12);
+  --accent-glow: rgba(200,241,53,0.25);
+  --pos: #4ade80;
+  --pos-bg: rgba(74,222,128,0.08);
+  --neg: #f87171;
+  --neg-bg: rgba(248,113,113,0.08);
+  --neu: #94a3b8;
+  --neu-bg: rgba(148,163,184,0.08);
+  --font-ar: 'IBM Plex Sans Arabic', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --shadow: 0 32px 64px rgba(0,0,0,0.6);
 }
 
-.container{width:100%;max-width:720px;position:relative;z-index:1}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ────── HEADER ────── */
-.header{text-align:center;margin-bottom:44px;animation:fadeDown .7s ease both}
-.badge{
-  display:inline-flex;align-items:center;gap:8px;
-  border:1px solid var(--accent-glow);background:var(--accent-dim);
-  color:var(--accent);font-family:var(--mono);font-size:10px;
-  letter-spacing:.14em;padding:5px 16px;border-radius:99px;
-  margin-bottom:22px;text-transform:uppercase;
-}
-.badge-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 1.8s ease infinite}
-h1{font-size:clamp(30px,5.5vw,52px);font-weight:700;letter-spacing:-.03em;line-height:1.1}
-h1 em{font-style:normal;color:var(--accent)}
-.tagline{font-size:14px;color:var(--muted);margin-top:12px;line-height:1.7;font-weight:300}
-.stats-header{
-  display:flex;justify-content:center;gap:28px;margin-top:20px;
-  flex-wrap:wrap;
-}
-.sh-item{text-align:center}
-.sh-num{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent)}
-.sh-label{font-size:11px;color:var(--muted);margin-top:2px}
-
-/* ────── CARD ────── */
-.card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);padding:36px;
-  animation:fadeUp .7s ease .15s both;position:relative;overflow:hidden;
-}
-.card-topline{
-  position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent 0%,var(--accent-glow) 40%,transparent 100%);
+body {
+  font-family: var(--font-ar);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 48px;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* ── textarea ── */
-.field-label{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:10px;
+/* Background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
 }
-.field-label span{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-.lang-pills{display:flex;gap:6px}
-.lp{font-size:10px;padding:2px 9px;border-radius:99px;font-family:var(--mono);
-    border:1px solid var(--border-md);color:var(--muted);background:transparent}
 
-.input-wrap{position:relative;margin-bottom:20px}
-textarea{
-  width:100%;min-height:150px;background:var(--surface2);
-  border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:18px 18px 38px;font-family:var(--font);font-size:16px;
-  color:var(--text);line-height:1.75;resize:none;outline:none;
-  transition:border-color .25s,box-shadow .25s;caret-color:var(--accent);
+/* Radial glow background */
+body::after {
+  content: '';
+  position: fixed;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(200,241,53,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
-textarea::placeholder{color:var(--dim)}
-textarea:focus{border-color:rgba(0,229,255,.35);box-shadow:0 0 0 3px rgba(0,229,255,.07)}
-.char-row{
-  position:absolute;bottom:10px;left:14px;right:14px;
-  display:flex;justify-content:space-between;align-items:center;
-}
-.char-count{font-family:var(--mono);font-size:10px;color:var(--dim)}
-.char-hint{font-family:var(--mono);font-size:10px;color:var(--dim)}
 
-/* ── button ── */
-.btn{
-  width:100%;background:var(--accent);color:#07080d;
-  border:none;padding:16px 24px;border-radius:var(--r-sm);
-  font-family:var(--font);font-size:17px;font-weight:700;
-  cursor:pointer;transition:all .2s ease;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  letter-spacing:-.01em;position:relative;overflow:hidden;
+.container {
+  width: 100%;
+  max-width: 680px;
+  position: relative;
+  z-index: 1;
 }
-.btn::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,0));
-  transition:background .2s;
-}
-.btn:hover::after{background:rgba(255,255,255,.12)}
-.btn:active{transform:scale(.985)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn-ico{font-size:18px;transition:transform .25s}
-.btn:hover:not(:disabled) .btn-ico{transform:scale(1.25) rotate(-10deg)}
 
-/* ── loading ── */
-.loading-wrap{
-  display:none;align-items:center;justify-content:center;
-  gap:12px;padding:26px 0 8px;color:var(--muted);font-size:13px;
+/* ── Header ── */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeDown 0.6s ease both;
 }
-.loading-wrap.on{display:flex}
-.spinner{
-  width:18px;height:18px;border:2px solid var(--border-md);
-  border-top-color:var(--accent);border-radius:50%;animation:spin .65s linear infinite;
-}
-.ldots span{
-  display:inline-block;width:4px;height:4px;
-  background:var(--accent);border-radius:50%;
-  animation:ldot 1.1s ease infinite;
-}
-.ldots span:nth-child(2){animation-delay:.18s}
-.ldots span:nth-child(3){animation-delay:.36s}
 
-/* ────── RESULT AREA ────── */
-#result{display:none;margin-top:30px;animation:fadeUp .5s ease both}
-#result.on{display:block}
-.divider{height:1px;background:var(--border);margin-bottom:26px}
-
-/* ── banner ── */
-.banner{
-  border-radius:var(--r-sm);padding:22px 26px;
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:22px;border:1px solid transparent;
-  transition:all .35s ease;
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(200,241,53,0.3);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  padding: 5px 14px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
 }
-.banner.Positive{background:var(--pos-bg);border-color:var(--pos-border)}
-.banner.Negative{background:var(--neg-bg);border-color:var(--neg-border)}
-.banner.Neutral{background:var(--neu-bg);border-color:var(--neu-border)}
-.banner-left .sub{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
-.banner-main{font-size:32px;font-weight:700;letter-spacing:-.03em}
-.banner-main.Positive{color:var(--pos)}
-.banner-main.Negative{color:var(--neg)}
-.banner-main.Neutral{color:var(--neu)}
-.banner-right{text-align:center}
-.banner-ico{font-size:46px;line-height:1;display:block}
-.banner-en{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:.06em}
 
-/* ── score bar ── */
-.score-wrap{margin-bottom:22px}
-.score-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-.score-head .lbl{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-.score-head .val{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)}
-.track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
-.fill{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.16,1,.3,1) .15s}
-.fill.Positive{background:linear-gradient(90deg,#1aab47,var(--pos))}
-.fill.Negative{background:linear-gradient(90deg,#cc2244,var(--neg))}
-.fill.Neutral{background:var(--neu)}
-
-/* ── dual bar ── */
-.dual-wrap{margin-bottom:22px}
-.dual-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.dual-label{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:52px;flex-shrink:0}
-.dual-track{flex:1;height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
-.dual-fill{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.16,1,.3,1) .25s}
-.dual-fill.pos-f{background:var(--pos)}
-.dual-fill.neg-f{background:var(--neg)}
-.dual-num{font-family:var(--mono);font-size:11px;width:36px;text-align:right;flex-shrink:0}
-.dual-num.pn{color:var(--pos)}
-.dual-num.nn{color:var(--neg)}
-
-/* ── stats ── */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
-.sbox{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--r-sm);padding:13px 14px;text-align:center;
-  transition:border-color .2s,transform .2s;cursor:default;
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s ease infinite;
 }
-.sbox:hover{border-color:var(--border-hi);transform:translateY(-2px)}
-.sbox-name{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
-.sbox-val{font-family:var(--mono);font-size:20px;font-weight:700}
-.sbox-val.v-pos{color:var(--pos)}
-.sbox-val.v-neg{color:var(--neg)}
-.sbox-val.v-net{color:var(--accent)}
-.sbox-val.v-neu{color:var(--neu)}
 
-/* ── keyword pills ── */
-.kw-block{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--r-sm);padding:16px 18px;margin-bottom:22px;
+h1 {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text);
 }
-.kw-head{font-family:var(--mono);font-size:10px;color:var(--muted);
-  letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;
-  display:flex;align-items:center;gap:8px;
-}
-.kw-count{
-  background:var(--surface3);border:1px solid var(--border-md);
-  color:var(--muted);font-size:9px;padding:1px 7px;border-radius:99px;
-}
-.kw-tags{display:flex;flex-wrap:wrap;gap:7px}
-.kw-tag{
-  font-size:12px;padding:4px 11px;border-radius:99px;
-  font-family:var(--font);border:1px solid;
-  animation:popIn .3s ease both;cursor:default;
-  transition:transform .15s;
-}
-.kw-tag:hover{transform:scale(1.05)}
-.kw-tag.p{background:var(--pos-bg);color:var(--pos);border-color:var(--pos-border)}
-.kw-tag.n{background:var(--neg-bg);color:var(--neg);border-color:var(--neg-border)}
-.kw-tag.rev{opacity:.7;text-decoration:line-through}
-.kw-empty{color:var(--dim);font-size:13px;font-style:italic}
 
-/* ── negation alert ── */
-.neg-alert{
-  display:none;align-items:center;gap:10px;
-  background:rgba(255,183,3,0.08);border:1px solid rgba(255,183,3,0.25);
-  border-radius:var(--r-sm);padding:11px 15px;margin-bottom:16px;
-  font-size:13px;color:var(--warn);
+h1 span {
+  color: var(--accent);
 }
-.neg-alert.on{display:flex}
-.neg-alert-ico{font-size:16px;flex-shrink:0}
 
-/* ── confidence ── */
-.conf-row{display:flex;align-items:center;gap:14px;margin-bottom:22px}
-.conf-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);
-  letter-spacing:.06em;text-transform:uppercase;min-width:66px}
-.conf-pips{display:flex;gap:5px;flex:1}
-.conf-pip{
-  height:7px;flex:1;border-radius:99px;
-  background:var(--surface2);border:1px solid var(--border);
-  transition:all .4s ease;
+.subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  font-weight: 300;
+  line-height: 1.6;
 }
-.conf-pip.on{background:var(--accent);border-color:var(--accent);box-shadow:0 0 6px rgba(0,229,255,.35)}
-.conf-val{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:54px;text-align:left}
 
-/* ── detail grid ── */
-.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
-.detail-box{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--r-sm);padding:13px 15px;
+/* ── Main Card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  animation: fadeUp 0.7s ease 0.1s both;
+  position: relative;
+  overflow: hidden;
 }
-.detail-name{font-family:var(--mono);font-size:9px;color:var(--muted);
-  letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
-.detail-val{font-size:13px;color:var(--text)}
 
-/* ── footer ── */
-.footer{
-  text-align:center;margin-top:36px;
-  font-family:var(--mono);font-size:11px;color:var(--dim);
-  letter-spacing:.05em;animation:fadeUp .9s ease .3s both;
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
 }
-.footer strong{color:var(--muted)}
 
-/* ── toast ── */
-.toast{
-  position:fixed;bottom:24px;left:50%;
-  transform:translateX(-50%) translateY(80px);
-  background:var(--surface2);border:1px solid rgba(255,77,109,.3);
-  color:var(--neg);padding:11px 20px;border-radius:var(--r-sm);
-  font-size:13px;font-family:var(--font);
-  z-index:100;transition:transform .35s cubic-bezier(.16,1,.3,1);
-  display:flex;align-items:center;gap:9px;white-space:nowrap;
-  box-shadow:0 8px 32px rgba(0,0,0,.5);
+/* ── Textarea ── */
+.input-wrap {
+  position: relative;
+  margin-bottom: 20px;
 }
-.toast.on{transform:translateX(-50%) translateY(0)}
 
-/* ────── ANIMATIONS ────── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-@keyframes ldot{0%,80%,100%{transform:scale(.4);opacity:.3}40%{transform:scale(1);opacity:1}}
-@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
-@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.input-label {
+  display: block;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
 
-/* ── responsive ── */
-@media(max-width:520px){
-  .card{padding:22px 16px}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .detail-grid{grid-template-columns:1fr}
-  h1{font-size:26px}
-  .banner-main{font-size:24px}
-  .banner-ico{font-size:36px}
-  .stats-header{gap:18px}
+textarea {
+  width: 100%;
+  min-height: 140px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  font-family: var(--font-ar);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.7;
+  resize: none;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  caret-color: var(--accent);
+}
+
+textarea::placeholder {
+  color: var(--text-dim);
+}
+
+textarea:focus {
+  border-color: rgba(200,241,53,0.4);
+  box-shadow: 0 0 0 3px rgba(200,241,53,0.08);
+}
+
+.char-count {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  direction: ltr;
+}
+
+/* ── Button ── */
+.btn {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0a0f;
+  border: none;
+  padding: 15px 24px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ar);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.2s;
+}
+
+.btn:hover::before { background: rgba(255,255,255,0.12); }
+.btn:active { transform: scale(0.985); }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.btn:hover .btn-icon { transform: rotate(-15deg); }
+
+/* ── Loading ── */
+.loading-state {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px 0 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.loading-state.active { display: flex; }
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-bright);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.loading-dots span {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: dots 1.2s ease infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Result Section ── */
+#result {
+  display: none;
+  margin-top: 28px;
+  animation: fadeUp 0.5s ease both;
+}
+
+#result.visible { display: block; }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 24px;
+}
+
+/* ── Sentiment Banner ── */
+.sentiment-banner {
+  border-radius: var(--radius-sm);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  transition: all 0.4s ease;
+  border: 1px solid transparent;
+}
+
+.sentiment-banner.Positive {
+  background: var(--pos-bg);
+  border-color: rgba(74,222,128,0.2);
+}
+
+.sentiment-banner.Negative {
+  background: var(--neg-bg);
+  border-color: rgba(248,113,113,0.2);
+}
+
+.sentiment-banner.Neutral {
+  background: var(--neu-bg);
+  border-color: rgba(148,163,184,0.15);
+}
+
+.banner-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.banner-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.banner-value.Positive { color: var(--pos); }
+.banner-value.Negative { color: var(--neg); }
+.banner-value.Neutral  { color: var(--neu); }
+
+.banner-emoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+/* ── Score Bar ── */
+.score-section {
+  margin-bottom: 20px;
+}
+
+.score-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.score-label {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.score-value {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.bar-track {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+
+.bar-fill.Positive { background: var(--pos); }
+.bar-fill.Negative { background: var(--neg); }
+.bar-fill.Neutral  { background: var(--neu); }
+
+/* ── Stats Grid ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.stat-box:hover {
+  border-color: var(--border-bright);
+}
+
+.stat-name {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-family: var(--font-mono);
+}
+
+.stat-num.pos { color: var(--pos); }
+.stat-num.neg { color: var(--neg); }
+.stat-num.net { color: var(--accent); }
+
+/* ── Keywords ── */
+.keywords-section {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.kw-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.kw-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kw-tag {
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-family: var(--font-ar);
+  border: 1px solid;
+  animation: popIn 0.3s ease both;
+}
+
+.kw-tag.pos { background: var(--pos-bg); color: var(--pos); border-color: rgba(74,222,128,0.25); }
+.kw-tag.neg { background: var(--neg-bg); color: var(--neg); border-color: rgba(248,113,113,0.25); }
+
+.kw-empty {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ── Confidence Bar ── */
+.confidence-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.conf-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.conf-pips {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.conf-pip {
+  height: 8px;
+  flex: 1;
+  border-radius: 99px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  transition: background 0.4s ease;
+}
+
+.conf-pip.filled { background: var(--accent); border-color: var(--accent); }
+
+.conf-text {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  min-width: 50px;
+  text-align: left;
+}
+
+/* ── Footer ── */
+.footer {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  animation: fadeUp 0.8s ease 0.3s both;
+}
+
+.footer strong {
+  color: var(--text-muted);
+}
+
+/* ── Error Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--surface2);
+  border: 1px solid rgba(248,113,113,0.3);
+  color: var(--neg);
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: var(--font-ar);
+  white-space: nowrap;
+  z-index: 99;
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes dots {
+  0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
+  40%            { transform: scale(1); opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .card { padding: 22px 18px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  h1 { font-size: 26px; }
+  .banner-value { font-size: 22px; }
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-
-  <!-- ── HEADER ── -->
+  <!-- Header -->
   <div class="header">
-    <div class="badge"><span class="badge-dot"></span>Hamza AI Engine v3.0 — ULTRA</div>
-    <h1>محلل <em>المشاعر</em> الذكي</h1>
-    <p class="tagline">أقوى محرك تحليل نصي بالعربي والإنجليزي · يدعم النفي، المبالغة، والأوزان الذكية</p>
-    <div class="stats-header">
-      <div class="sh-item"><div class="sh-num" id="sh-pos">—</div><div class="sh-label">كلمة إيجابية</div></div>
-      <div class="sh-item"><div class="sh-num" id="sh-neg">—</div><div class="sh-label">كلمة سلبية</div></div>
-      <div class="sh-item"><div class="sh-num" id="sh-total">—</div><div class="sh-label">إجمالي القاموس</div></div>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Hamza AI Engine v2.0
     </div>
+    <h1>محلل <span>المشاعر</span> الذكي</h1>
+    <p class="subtitle">تحليل النص العربي والإنجليزي بدقة عالية<br></p>
   </div>
 
-  <!-- ── CARD ── -->
+  <!-- Card -->
   <div class="card">
-    <div class="card-topline"></div>
-
-    <div class="field-label">
-      <span>// أدخل النص للتحليل</span>
-      <div class="lang-pills"><span class="lp">AR</span><span class="lp">EN</span></div>
-    </div>
-
+    <label class="input-label" for="inputText">// أدخل النص للتحليل</label>
     <div class="input-wrap">
-      <textarea id="inputText"
-        placeholder="اكتب جملتك هنا… الخدمة ممتازة جداً وسريعة! / The service was absolutely amazing and fast!"
-        oninput="onInput()"
+      <textarea
+        id="inputText"
+        placeholder="اكتب جملتك هنا… مثال: الخدمة ممتازة جداً وسريعة، شكراً جزيلاً!"
+        oninput="updateChar()"
         onkeydown="handleKey(event)"
       ></textarea>
-      <div class="char-row">
-        <span class="char-count" id="charCount">0 / 1000</span>
-        <span class="char-hint">Ctrl+Enter للتحليل</span>
-      </div>
+      <span class="char-count" id="charCount">0 / 500</span>
     </div>
 
     <button class="btn" id="btn" onclick="analyzeText()">
-      <span class="btn-ico">⚡</span>
+      <span class="btn-icon">⚡</span>
       تحليل المشاعر
     </button>
 
-    <div class="loading-wrap" id="loading">
+    <!-- Loading -->
+    <div class="loading-state" id="loading">
       <div class="spinner"></div>
-      <span>جاري التحليل...</span>
-      <div class="ldots"><span></span><span></span><span></span></div>
+      <span>جاري المعالجة...</span>
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
     </div>
 
-    <!-- ── RESULT ── -->
+    <!-- Result -->
     <div id="result">
       <div class="divider"></div>
 
       <!-- Banner -->
-      <div class="banner" id="banner">
-        <div class="banner-left">
-          <div class="sub">// النتيجة النهائية</div>
-          <div class="banner-main" id="bannerMain">—</div>
+      <div class="sentiment-banner" id="sentimentBanner">
+        <div>
+          <div class="banner-label">// النتيجة النهائية</div>
+          <div class="banner-value" id="bannerValue">—</div>
         </div>
-        <div class="banner-right">
-          <span class="banner-ico" id="bannerIco">🔍</span>
-          <div class="banner-en" id="bannerEn">—</div>
+        <div class="banner-emoji" id="bannerEmoji">🔍</div>
+      </div>
+
+      <!-- Score Bar -->
+      <div class="score-section">
+        <div class="score-label-row">
+          <span class="score-label">// مقياس المشاعر</span>
+          <span class="score-value" id="scoreDisplay">0</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="barFill"></div>
         </div>
       </div>
 
-      <!-- Negation alert -->
-      <div class="neg-alert" id="negAlert">
-        <span class="neg-alert-ico">⚠</span>
-        <span id="negAlertText">تم اكتشاف نفي — بعض الكلمات عُكست في الحساب</span>
-      </div>
-
-      <!-- Score bar -->
-      <div class="score-wrap">
-        <div class="score-head">
-          <span class="lbl">// درجة المشاعر</span>
-          <span class="val" id="scoreVal">0</span>
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-name">إيجابي</div>
+          <div class="stat-num pos" id="statPos">0</div>
         </div>
-        <div class="track"><div class="fill" id="fillBar"></div></div>
-      </div>
-
-      <!-- Dual bars -->
-      <div class="dual-wrap">
-        <div class="dual-row">
-          <span class="dual-label">إيجابي</span>
-          <div class="dual-track"><div class="dual-fill pos-f" id="posBar"></div></div>
-          <span class="dual-num pn" id="posNum">0</span>
+        <div class="stat-box">
+          <div class="stat-name">سلبي</div>
+          <div class="stat-num neg" id="statNeg">0</div>
         </div>
-        <div class="dual-row">
-          <span class="dual-label">سلبي</span>
-          <div class="dual-track"><div class="dual-fill neg-f" id="negBar"></div></div>
-          <span class="dual-num nn" id="negNum">0</span>
+        <div class="stat-box">
+          <div class="stat-name">صافي</div>
+          <div class="stat-num net" id="statNet">0</div>
         </div>
-      </div>
-
-      <!-- Stats row -->
-      <div class="stats-row">
-        <div class="sbox"><div class="sbox-name">صافي</div><div class="sbox-val v-net" id="s-net">0</div></div>
-        <div class="sbox"><div class="sbox-name">إيجابي</div><div class="sbox-val v-pos" id="s-pos">0</div></div>
-        <div class="sbox"><div class="sbox-name">سلبي</div><div class="sbox-val v-neg" id="s-neg">0</div></div>
-        <div class="sbox"><div class="sbox-name">كلمات</div><div class="sbox-val v-neu" id="s-words">0</div></div>
-      </div>
-
-      <!-- Confidence -->
-      <div class="conf-row">
-        <span class="conf-lbl">// الثقة</span>
-        <div class="conf-pips">
-          <div class="conf-pip" id="cp0"></div>
-          <div class="conf-pip" id="cp1"></div>
-          <div class="conf-pip" id="cp2"></div>
-          <div class="conf-pip" id="cp3"></div>
-          <div class="conf-pip" id="cp4"></div>
-          <div class="conf-pip" id="cp5"></div>
-          <div class="conf-pip" id="cp6"></div>
-          <div class="conf-pip" id="cp7"></div>
-          <div class="conf-pip" id="cp8"></div>
-          <div class="conf-pip" id="cp9"></div>
-        </div>
-        <span class="conf-val" id="confVal">—</span>
       </div>
 
       <!-- Keywords -->
-      <div class="kw-block">
-        <div class="kw-head">
-          // الكلمات المكتشفة
-          <span class="kw-count" id="kwCount">0</span>
-        </div>
+      <div class="keywords-section">
+        <div class="kw-label">// الكلمات المكتشفة</div>
         <div class="kw-tags" id="kwTags"></div>
       </div>
 
-      <!-- Detail grid -->
-      <div class="detail-grid">
-        <div class="detail-box">
-          <div class="detail-name">حالة النفي</div>
-          <div class="detail-val" id="d-negate">—</div>
+      <!-- Confidence -->
+      <div class="confidence-section">
+        <span class="conf-label">// الثقة</span>
+        <div class="conf-pips" id="confPips">
+          <div class="conf-pip"></div>
+          <div class="conf-pip"></div>
+          <div class="conf-pip"></div>
+          <div class="conf-pip"></div>
+          <div class="conf-pip"></div>
         </div>
-        <div class="detail-box">
-          <div class="detail-name">تضخيم مكتشف</div>
-          <div class="detail-val" id="d-amp">—</div>
-        </div>
-        <div class="detail-box">
-          <div class="detail-name">نقاط API</div>
-          <div class="detail-val" id="d-api">—</div>
-        </div>
-        <div class="detail-box">
-          <div class="detail-name">مصدر التحليل</div>
-          <div class="detail-val" id="d-source">—</div>
-        </div>
+        <span class="conf-text" id="confText">—</span>
       </div>
     </div>
   </div>
 
+  <!-- Footer -->
   <div class="footer">
-    <strong>iSolutions API</strong> · Hamza AI Engine v3.0 ULTRA · 2025
+    <strong>iSolutions API</strong> · Powered by Hamza's Hybrid AI Engine · 2025
   </div>
 </div>
 
-<div class="toast" id="toast"><span>⚠</span><span id="toastMsg"></span></div>
+<!-- Toast -->
+<div class="toast" id="toast">⚠ <span id="toastMsg"></span></div>
 
 <script>
-/* ══════════════════════════════════════════════
-   HAMZA AI ENGINE v3.0 — ULTRA DICTIONARY
-   ~2000+ entries with weights
-   Weight scale: 1=mild  2=moderate  3=strong  4=very strong  5=extreme
-   ══════════════════════════════════════════════ */
-
-const POS = [
-/* ── ARABIC POSITIVE ── */
-/* إطراء عام */
-{w:"ممتاز",wt:3},{w:"ممتازة",wt:3},{w:"رائع",wt:3},{w:"رائعة",wt:3},{w:"جميل",wt:2},
-{w:"جميلة",wt:2},{w:"مذهل",wt:3},{w:"مذهلة",wt:3},{w:"بديع",wt:3},{w:"بديعة",wt:3},
-{w:"روعة",wt:3},{w:"عظيم",wt:3},{w:"عظيمة",wt:3},{w:"رهيب",wt:3},{w:"رهيبة",wt:3},
-{w:"مبهر",wt:3},{w:"مبهرة",wt:3},{w:"تحفة",wt:3},{w:"تحفة فنية",wt:4},{w:"يجنن",wt:3},
-{w:"جنان",wt:3},{w:"خيال",wt:3},{w:"خرافي",wt:3},{w:"خرافية",wt:3},{w:"اسطوري",wt:4},
-{w:"أسطوري",wt:4},{w:"أسطورية",wt:4},{w:"ولا أروع",wt:4},{w:"ولا اروع",wt:4},{w:"لا يوصف",wt:4},
-{w:"مثالي",wt:4},{w:"مثالية",wt:4},{w:"كمال",wt:3},{w:"الكمال",wt:3},{w:"لا مثيل",wt:4},
-{w:"استثنائي",wt:3},{w:"استثنائية",wt:3},{w:"فريد",wt:3},{w:"فريدة",wt:3},{w:"لا نظير",wt:4},
-{w:"متميز",wt:3},{w:"متميزة",wt:3},{w:"راقي",wt:2},{w:"راقية",wt:2},{w:"فاخر",wt:2},
-{w:"فاخرة",wt:2},{w:"نخبة",wt:2},{w:"نادر",wt:2},{w:"نادرة",wt:2},{w:"مميز",wt:2},
-{w:"مميزة",wt:2},{w:"الأفضل",wt:3},{w:"افضل",wt:2},{w:"أفضل",wt:2},{w:"الأحسن",wt:3},
-{w:"أحسن",wt:2},{w:"احسن",wt:2},{w:"أجود",wt:2},{w:"الأعلى",wt:2},{w:"منقطع النظير",wt:4},
-
-/* شكر وامتنان */
-{w:"شكرا",wt:2},{w:"شكراً",wt:2},{w:"شكرًا",wt:2},{w:"شكر",wt:1},{w:"اشكرك",wt:2},
-{w:"أشكرك",wt:2},{w:"اشكركم",wt:2},{w:"أشكركم",wt:2},{w:"شاكر",wt:2},{w:"ممنون",wt:2},
-{w:"ممنونة",wt:2},{w:"ممتنن",wt:2},{w:"ممتنة",wt:2},{w:"تسلم",wt:2},{w:"تسلمين",wt:2},
-{w:"يعطيك العافية",wt:3},{w:"يعطيه العافية",wt:3},{w:"يعطيكم العافية",wt:3},
-{w:"جزاك الله خيرا",wt:3},{w:"جزاك الله خيراً",wt:3},{w:"بارك الله فيك",wt:3},
-{w:"جزاك خير",wt:2},{w:"الله يجزاك",wt:2},{w:"عاشت الأيادي",wt:3},{w:"يسلمو",wt:2},
-{w:"يسلموا",wt:2},{w:"سلمت",wt:2},{w:"سلمت يداك",wt:3},{w:"مشكور",wt:2},{w:"مشكورة",wt:2},
-{w:"الله يكافئك",wt:2},{w:"يكافئك",wt:2},{w:"شكراً جزيلاً",wt:3},{w:"شكرا جزيلا",wt:3},
-{w:"ألف شكر",wt:3},{w:"مليون شكر",wt:4},{w:"تقديراً",wt:2},{w:"تقدير",wt:1},
-
-/* سعادة ورضا */
-{w:"سعيد",wt:2},{w:"سعيدة",wt:2},{w:"سعادة",wt:2},{w:"مسرور",wt:2},{w:"مسرورة",wt:2},
-{w:"فرحان",wt:2},{w:"فرحانة",wt:2},{w:"فرح",wt:2},{w:"فرحة",wt:2},{w:"راضي",wt:2},
-{w:"راضية",wt:2},{w:"رضا",wt:2},{w:"مرتاح",wt:2},{w:"مرتاحة",wt:2},{w:"ارتياح",wt:2},
-{w:"مبسوط",wt:2},{w:"مبسوطة",wt:2},{w:"منبسط",wt:2},{w:"سرور",wt:2},{w:"بهجة",wt:2},
-{w:"نشوة",wt:3},{w:"غبطة",wt:2},{w:"انبهار",wt:2},{w:"إعجاب",wt:2},{w:"اعجاب",wt:2},
-{w:"إعجابي",wt:2},{w:"حبور",wt:2},{w:"انشراح",wt:2},{w:"طمأنينة",wt:2},
-
-/* جودة وكفاءة */
-{w:"جودة",wt:2},{w:"كفاءة",wt:2},{w:"دقة",wt:2},{w:"احترافية",wt:3},{w:"احترافي",wt:3},
-{w:"محترف",wt:3},{w:"محترفة",wt:3},{w:"خبير",wt:2},{w:"خبيرة",wt:2},{w:"ماهر",wt:2},
-{w:"ماهرة",wt:2},{w:"متقن",wt:3},{w:"متقنة",wt:3},{w:"إتقان",wt:3},{w:"اتقان",wt:3},
-{w:"حرفي",wt:2},{w:"حرفية",wt:2},{w:"مهاري",wt:2},{w:"مهارة",wt:2},{w:"موهبة",wt:2},
-{w:"موهوب",wt:2},{w:"موهوبة",wt:2},{w:"عبقري",wt:3},{w:"عبقرية",wt:3},{w:"نابغة",wt:3},
-{w:"متخصص",wt:2},{w:"متخصصة",wt:2},{w:"متفوق",wt:3},{w:"متفوقة",wt:3},
-
-/* سرعة وكفاءة */
-{w:"سريع",wt:2},{w:"سريعة",wt:2},{w:"سرعة",wt:2},{w:"فوري",wt:2},{w:"فورية",wt:2},
-{w:"لحظي",wt:2},{w:"عاجل",wt:1},{w:"مباشر",wt:1},{w:"نشيط",wt:2},{w:"فعّال",wt:2},
-{w:"فعال",wt:2},{w:"فعالة",wt:2},{w:"منتج",wt:2},{w:"منتجة",wt:2},{w:"مجتهد",wt:2},
-{w:"مجتهدة",wt:2},{w:"طموح",wt:2},
-
-/* ثقة ومصداقية */
-{w:"ثقة",wt:2},{w:"موثوق",wt:2},{w:"موثوقة",wt:2},{w:"أمانة",wt:2},{w:"امانة",wt:2},
-{w:"صادق",wt:2},{w:"صادقة",wt:2},{w:"صدق",wt:2},{w:"نزاهة",wt:2},{w:"شفافية",wt:2},
-{w:"مصداقية",wt:2},{w:"مضمون",wt:2},{w:"مضمونة",wt:2},{w:"ضمان",wt:2},{w:"معتمد",wt:2},
-{w:"معتمدة",wt:2},{w:"رسمي",wt:1},{w:"رسمية",wt:1},
-
-/* خدمة عملاء */
-{w:"خدمة ممتازة",wt:4},{w:"خدمة رائعة",wt:4},{w:"خدمة جيدة",wt:3},{w:"خدمة عالية",wt:3},
-{w:"خدمة احترافية",wt:4},{w:"متجاوب",wt:2},{w:"متجاوبة",wt:2},{w:"مساعد",wt:2},
-{w:"مساعدة",wt:2},{w:"لطيف",wt:2},{w:"لطيفة",wt:2},{w:"مؤدب",wt:2},{w:"مؤدبة",wt:2},
-{w:"محبوب",wt:2},{w:"محبوبة",wt:2},{w:"ودود",wt:2},{w:"ودودة",wt:2},{w:"متفهم",wt:2},
-{w:"متفهمة",wt:2},{w:"كريم",wt:2},{w:"كريمة",wt:2},{w:"سخي",wt:2},{w:"سخية",wt:2},
-
-/* نجاح وإنجاز */
-{w:"ناجح",wt:2},{w:"ناجحة",wt:2},{w:"نجاح",wt:2},{w:"إنجاز",wt:2},{w:"انجاز",wt:2},
-{w:"تفوق",wt:3},{w:"برع",wt:2},{w:"تميز",wt:2},{w:"أنجز",wt:2},{w:"حقق",wt:2},
-{w:"اكتمل",wt:1},{w:"أتمم",wt:1},{w:"منجز",wt:2},{w:"محقق",wt:2},{w:"متكامل",wt:2},
-{w:"مكتمل",wt:2},{w:"شامل",wt:2},{w:"شاملة",wt:2},{w:"متكاملة",wt:2},
-
-/* توصية */
-{w:"أنصح",wt:2},{w:"انصح",wt:2},{w:"أوصي",wt:2},{w:"اوصي",wt:2},{w:"ينصح به",wt:3},
-{w:"موصى به",wt:3},{w:"مُوصى",wt:2},{w:"يستحق",wt:2},{w:"تستحق",wt:2},{w:"يستحق التجربة",wt:3},
-{w:"جرب",wt:1},{w:"جربوه",wt:1},{w:"اجربه",wt:1},{w:"لازم تجربه",wt:3},{w:"لا تفوّتوه",wt:3},
-
-/* تعابير عامية خليجية */
-{w:"كفو",wt:2},{w:"كفووو",wt:3},{w:"كفوووو",wt:4},{w:"بطل",wt:3},{w:"أبطال",wt:3},
-{w:"وناسة",wt:3},{w:"جبار",wt:3},{w:"قوي",wt:2},{w:"قوية",wt:2},{w:"حلو",wt:2},
-{w:"حلوة",wt:2},{w:"يسطا",wt:2},{w:"ياسطا",wt:2},{w:"يا صديقي",wt:1},{w:"والله",wt:1},
-{w:"والله تمام",wt:3},{w:"تمام",wt:2},{w:"تمام التمام",wt:4},{w:"زين",wt:2},{w:"زينة",wt:2},
-{w:"كويس",wt:2},{w:"كويسة",wt:2},{w:"حلال",wt:1},{w:"ما شاء الله",wt:3},{w:"ماشاء الله",wt:3},
-{w:"سبحان الله",wt:2},{w:"الحمد لله",wt:1},{w:"أبو",wt:1},{w:"يا سلام",wt:3},
-{w:"يا هلا",wt:2},{w:"يا مرحبا",wt:2},{w:"هلا والله",wt:2},{w:"هلاوالله",wt:2},
-{w:"يعيش",wt:2},{w:"عاش",wt:2},{w:"عاش من شافك",wt:3},{w:"صح",wt:2},{w:"ايه",wt:1},
-{w:"أيه",wt:1},{w:"ايوه",wt:1},{w:"صحيح",wt:1},{w:"صح كلامك",wt:2},{w:"تسلم يداك",wt:3},
-
-/* مصري وشامي */
-{w:"عظيم جداً",wt:4},{w:"اكتر من رائع",wt:4},{w:"جامد",wt:2},{w:"جامدة",wt:2},
-{w:"جامد جداً",wt:3},{w:"مش عارف أشكرك",wt:3},{w:"أوسم",wt:3},{w:"تميز",wt:2},
-{w:"نيس",wt:2},{w:"كتير",wt:1},{w:"كتير حلو",wt:3},{w:"ولا في الأحلام",wt:4},
-{w:"طيب",wt:1},{w:"طيبة",wt:2},{w:"يا ريتني",wt:1},{w:"كل التوفيق",wt:2},
-
-/* وصف تجربة */
-{w:"تجربة رائعة",wt:4},{w:"تجربة ممتازة",wt:4},{w:"تجربة مذهلة",wt:4},{w:"تجربة جيدة",wt:3},
-{w:"تجربة إيجابية",wt:3},{w:"تجربة لا تنسى",wt:4},{w:"تجربة فريدة",wt:4},
-{w:"تجربة مميزة",wt:3},{w:"تجربة رهيبة",wt:3},{w:"أفضل تجربة",wt:4},
-{w:"تجربة استثنائية",wt:4},{w:"أنصح بالتجربة",wt:3},
-
-/* إبداع وجمال */
-{w:"مبدع",wt:3},{w:"مبدعة",wt:3},{w:"إبداع",wt:3},{w:"ابداع",wt:3},{w:"إبداعي",wt:3},
-{w:"ابداعي",wt:3},{w:"خلّاق",wt:3},{w:"خلاق",wt:3},{w:"مبتكر",wt:3},{w:"مبتكرة",wt:3},
-{w:"ابتكار",wt:3},{w:"إبتكار",wt:3},{w:"ذكي",wt:2},{w:"ذكية",wt:2},{w:"ذكاء",wt:2},
-{w:"نبوغ",wt:3},{w:"لمعة",wt:2},{w:"ألمعي",wt:3},{w:"بارع",wt:3},{w:"بارعة",wt:3},
-
-/* ── ENGLISH POSITIVE ── */
-/* excellence */
-{w:"excellent",wt:3},{w:"amazing",wt:3},{w:"awesome",wt:3},{w:"outstanding",wt:4},
-{w:"superb",wt:4},{w:"magnificent",wt:4},{w:"brilliant",wt:3},{w:"exceptional",wt:3},
-{w:"extraordinary",wt:4},{w:"incredible",wt:4},{w:"unbelievable",wt:4},{w:"phenomenal",wt:4},
-{w:"spectacular",wt:4},{w:"tremendous",wt:3},{w:"marvelous",wt:4},{w:"wonderful",wt:3},
-{w:"fantastic",wt:3},{w:"fabulous",wt:3},{w:"terrific",wt:3},{w:"stellar",wt:3},
-{w:"flawless",wt:4},{w:"perfect",wt:4},{w:"impeccable",wt:4},{w:"immaculate",wt:4},
-{w:"spotless",wt:3},{w:"pristine",wt:3},{w:"ideal",wt:3},{w:"exemplary",wt:3},
-{w:"matchless",wt:4},{w:"unmatched",wt:4},{w:"unrivaled",wt:4},{w:"peerless",wt:4},
-{w:"world-class",wt:4},{w:"top-notch",wt:4},{w:"first-rate",wt:4},{w:"best-in-class",wt:4},
-{w:"best",wt:3},{w:"greatest",wt:3},{w:"finest",wt:3},
-
-/* positive adj */
-{w:"good",wt:1},{w:"great",wt:2},{w:"nice",wt:1},{w:"lovely",wt:2},{w:"delightful",wt:2},
-{w:"pleasant",wt:2},{w:"pleasing",wt:2},{w:"satisfying",wt:2},{w:"rewarding",wt:2},
-{w:"enjoyable",wt:2},{w:"entertaining",wt:1},{w:"engaging",wt:2},{w:"impressive",wt:3},
-{w:"remarkable",wt:3},{w:"noteworthy",wt:2},{w:"commendable",wt:2},{w:"praiseworthy",wt:3},
-{w:"admirable",wt:2},{w:"laudable",wt:2},{w:"creditable",wt:2},{w:"worthwhile",wt:2},
-{w:"valuable",wt:2},{w:"helpful",wt:2},{w:"useful",wt:2},{w:"practical",wt:2},
-{w:"convenient",wt:2},{w:"accessible",wt:2},{w:"easy",wt:1},{w:"simple",wt:1},
-{w:"smooth",wt:2},{w:"seamless",wt:3},{w:"effortless",wt:3},{w:"intuitive",wt:2},
-{w:"user-friendly",wt:2},{w:"elegant",wt:2},{w:"stylish",wt:2},{w:"beautiful",wt:2},
-{w:"gorgeous",wt:3},{w:"stunning",wt:3},{w:"breathtaking",wt:4},{w:"captivating",wt:3},
-
-/* emotions */
-{w:"happy",wt:2},{w:"joyful",wt:2},{w:"cheerful",wt:2},{w:"thrilled",wt:3},{w:"ecstatic",wt:4},
-{w:"overjoyed",wt:4},{w:"elated",wt:3},{w:"delighted",wt:3},{w:"excited",wt:2},{w:"enthusiastic",wt:2},
-{w:"pleased",wt:2},{w:"satisfied",wt:2},{w:"content",wt:2},{w:"grateful",wt:2},{w:"thankful",wt:2},
-{w:"appreciative",wt:2},{w:"relieved",wt:2},{w:"confident",wt:2},{w:"hopeful",wt:2},
-{w:"optimistic",wt:2},{w:"inspired",wt:2},{w:"motivated",wt:2},{w:"proud",wt:2},
-{w:"impressed",wt:3},{w:"blown away",wt:4},{w:"mind-blown",wt:4},{w:"speechless",wt:3},
-
-/* quality & reliability */
-{w:"quality",wt:2},{w:"reliable",wt:2},{w:"dependable",wt:2},{w:"trustworthy",wt:3},
-{w:"consistent",wt:2},{w:"accurate",wt:2},{w:"precise",wt:2},{w:"thorough",wt:2},
-{w:"comprehensive",wt:2},{w:"complete",wt:2},{w:"professional",wt:3},{w:"expert",wt:2},
-{w:"skilled",wt:2},{w:"talented",wt:2},{w:"capable",wt:2},{w:"competent",wt:2},
-{w:"efficient",wt:2},{w:"effective",wt:2},{w:"productive",wt:2},{w:"powerful",wt:2},
-{w:"robust",wt:2},{w:"stable",wt:2},{w:"secure",wt:2},{w:"safe",wt:2},
-
-/* service */
-{w:"responsive",wt:2},{w:"fast",wt:2},{w:"quick",wt:2},{w:"prompt",wt:2},{w:"timely",wt:2},
-{w:"punctual",wt:2},{w:"attentive",wt:2},{w:"caring",wt:2},{w:"supportive",wt:2},
-{w:"friendly",wt:2},{w:"warm",wt:2},{w:"welcoming",wt:2},{w:"courteous",wt:2},
-{w:"polite",wt:2},{w:"kind",wt:2},{w:"generous",wt:2},{w:"patient",wt:2},
-{w:"understanding",wt:2},{w:"helpful staff",wt:3},{w:"great service",wt:4},
-{w:"excellent service",wt:4},{w:"customer service",wt:1},{w:"top service",wt:3},
-
-/* recommend & value */
-{w:"recommend",wt:2},{w:"highly recommend",wt:4},{w:"strongly recommend",wt:4},
-{w:"must try",wt:3},{w:"must-try",wt:3},{w:"worth it",wt:3},{w:"worth every",wt:3},
-{w:"great value",wt:3},{w:"good value",wt:3},{w:"value for money",wt:3},
-{w:"affordable",wt:2},{w:"fair price",wt:2},{w:"reasonable",wt:2},{w:"love it",wt:3},
-{w:"love this",wt:3},{w:"love the",wt:2},{w:"i love",wt:2},{w:"loved it",wt:3},
-{w:"loved this",wt:3},{w:"amazing experience",wt:4},{w:"great experience",wt:4},
-{w:"wonderful experience",wt:4},{w:"best experience",wt:5},{w:"5 stars",wt:4},
-{w:"five stars",wt:4},{w:"10/10",wt:5},{w:"100/100",wt:5},{w:"would buy again",wt:3},
-{w:"will return",wt:2},{w:"coming back",wt:2},{w:"definitely coming back",wt:3},
-
-/* innovation */
-{w:"innovative",wt:3},{w:"creative",wt:2},{w:"original",wt:2},{w:"unique",wt:2},
-{w:"groundbreaking",wt:4},{w:"revolutionary",wt:4},{w:"cutting-edge",wt:3},{w:"state-of-the-art",wt:3},
-{w:"advanced",wt:2},{w:"sophisticated",wt:2},{w:"smart",wt:2},{w:"intelligent",wt:2},
-{w:"clever",wt:2},{w:"ingenious",wt:3},{w:"genius",wt:3},
-
-/* informal */
-{w:"wow",wt:2},{w:"wow!",wt:3},{w:"omg",wt:2},{w:"insane",wt:3},{w:"fire",wt:3},
-{w:"lit",wt:2},{w:"goat",wt:3},{w:"the goat",wt:3},{w:"goated",wt:3},{w:"banger",wt:3},
-{w:"slaps",wt:2},{w:"chef's kiss",wt:4},{w:"no cap",wt:2},{w:"bussin",wt:3},
-{w:"absolute gem",wt:4},{w:"hidden gem",wt:3},{w:"gem",wt:2},{w:"treasure",wt:2},
-{w:"masterpiece",wt:4},{w:"works of art",wt:4},{w:"underrated",wt:2},{w:"overperformed",wt:3},
-{w:"exceeded expectations",wt:4},{w:"beyond expectations",wt:4},{w:"exceeded my",wt:3},
-
-/* thanks */
-{w:"thanks",wt:1},{w:"thank you",wt:2},{w:"thank you so much",wt:3},{w:"many thanks",wt:2},
-{w:"much appreciated",wt:3},{w:"truly appreciate",wt:3},{w:"i appreciate",wt:2},
-{w:"grateful",wt:2},{w:"thankful",wt:2},{w:"deeply grateful",wt:3},
-];
-
-const NEG = [
-/* ── ARABIC NEGATIVE ── */
-/* نقد عام */
-{w:"سيء",wt:2},{w:"سيئ",wt:2},{w:"سيئة",wt:2},{w:"سئ",wt:2},{w:"رديء",wt:3},
-{w:"رديئة",wt:3},{w:"رداءة",wt:3},{w:"خايس",wt:3},{w:"خيسة",wt:3},{w:"خايسة",wt:3},
-{w:"وايع",wt:2},{w:"واطي",wt:2},{w:"واطية",wt:2},{w:"متردي",wt:2},{w:"متردية",wt:2},
-{w:"تدهور",wt:2},{w:"انهيار",wt:3},{w:"كارثة",wt:4},{w:"كارثي",wt:4},{w:"كارثية",wt:4},
-{w:"فضيحة",wt:3},{w:"مصيبة",wt:3},{w:"زفت",wt:3},{w:"نعل",wt:3},{w:"لا يسوى",wt:3},
-{w:"لا يساوي",wt:3},{w:"ما يسوى",wt:3},{w:"ما يستاهل",wt:3},{w:"لا يستحق",wt:3},
-{w:"ما يستحق",wt:3},{w:"تافه",wt:3},{w:"تافهة",wt:3},{w:"هراء",wt:3},{w:"فارغ",wt:2},
-{w:"فارغة",wt:2},{w:"بلا معنى",wt:2},{w:"بدون معنى",wt:2},{w:"لا قيمة",wt:3},
-{w:"بلا قيمة",wt:3},{w:"عديم الفائدة",wt:3},{w:"عديمة الفائدة",wt:3},{w:"بدون فائدة",wt:3},
-{w:"ما ينفع",wt:3},{w:"ما تنفع",wt:3},{w:"لا ينفع",wt:3},{w:"لا تنفع",wt:3},
-
-/* إحباط */
-{w:"محبط",wt:3},{w:"محبطة",wt:3},{w:"إحباط",wt:3},{w:"احباط",wt:3},{w:"مخيب",wt:3},
-{w:"مخيبة",wt:3},{w:"خيبة أمل",wt:4},{w:"خيبة",wt:3},{w:"أخفق",wt:2},{w:"اخفق",wt:2},
-{w:"إخفاق",wt:2},{w:"اخفاق",wt:2},{w:"فشل",wt:3},{w:"فاشل",wt:3},{w:"فاشلة",wt:3},
-{w:"فشلت",wt:3},{w:"يفشل",wt:2},{w:"فاشلين",wt:3},{w:"كسول",wt:2},{w:"كسولة",wt:2},
-{w:"كسل",wt:2},{w:"إهمال",wt:3},{w:"اهمال",wt:3},{w:"مهمل",wt:3},{w:"مهملة",wt:3},
-
-/* غضب */
-{w:"غاضب",wt:3},{w:"غاضبة",wt:3},{w:"غضب",wt:3},{w:"زعلان",wt:2},{w:"زعلانة",wt:2},
-{w:"زعل",wt:2},{w:"تعصبت",wt:2},{w:"أزعجني",wt:2},{w:"ازعجني",wt:2},{w:"أغضبني",wt:3},
-{w:"اغضبني",wt:3},{w:"سئمت",wt:2},{w:"ملّيت",wt:2},{w:"انزعجت",wt:2},{w:"تضايقت",wt:2},
-{w:"ضيق",wt:2},{w:"ضيقة",wt:2},{w:"توتر",wt:2},{w:"انتقاد",wt:2},{w:"قلق",wt:2},
-
-/* خداع واحتيال */
-{w:"احتيال",wt:5},{w:"نصب",wt:5},{w:"غش",wt:4},{w:"كذب",wt:4},{w:"كذاب",wt:4},
-{w:"كاذب",wt:4},{w:"كاذبة",wt:4},{w:"خداع",wt:4},{w:"خادع",wt:4},{w:"خادعة",wt:4},
-{w:"تدليس",wt:4},{w:"مدلس",wt:4},{w:"مزور",wt:4},{w:"تزوير",wt:4},{w:"سرقة",wt:5},
-{w:"سارق",wt:5},{w:"ينصب",wt:5},{w:"نصاب",wt:5},{w:"محتال",wt:5},{w:"نصابين",wt:5},
-{w:"استغل",wt:4},{w:"استغلال",wt:4},{w:"ضحكوا عليه",wt:4},{w:"ضحكوا علينا",wt:4},
-
-/* ندم */
-{w:"ندمت",wt:3},{w:"نادم",wt:3},{w:"نادمة",wt:3},{w:"أتمنى ما",wt:3},{w:"ياريتني",wt:3},
-{w:"يا ريتني ما",wt:3},{w:"لو أعلم",wt:2},{w:"لو اعلم",wt:2},{w:"خسارة",wt:3},
-{w:"خسرت",wt:3},{w:"خسارة فيه",wt:4},{w:"خسارة وقتي",wt:4},{w:"خسارة فلوسي",wt:4},
-{w:"ضيعت وقتي",wt:3},{w:"ضاع وقتي",wt:3},{w:"تلفت فلوسي",wt:4},{w:"ضيعت فلوسي",wt:3},
-
-/* أخطاء وعطل */
-{w:"عطل",wt:2},{w:"أعطال",wt:2},{w:"خربان",wt:3},{w:"خربانة",wt:3},{w:"يتعطل",wt:2},
-{w:"تعطل",wt:2},{w:"مشكلة",wt:2},{w:"مشاكل",wt:2},{w:"خطأ",wt:2},{w:"غلط",wt:2},
-{w:"غلطة",wt:2},{w:"أخطاء",wt:2},{w:"خلل",wt:2},{w:"بق",wt:2},{w:"باق",wt:2},
-{w:"تعطّل",wt:2},{w:"إشكالية",wt:2},{w:"اشكالية",wt:2},{w:"ثغرة",wt:2},{w:"ثغرات",wt:2},
-
-/* بطء وتأخير */
-{w:"بطيء",wt:2},{w:"بطيئة",wt:2},{w:"بطء",wt:2},{w:"تأخير",wt:2},{w:"تأخر",wt:2},
-{w:"تأخيرات",wt:2},{w:"تعطيل",wt:2},{w:"أبطأ",wt:2},{w:"ثقيل",wt:2},{w:"ثقيلة",wt:2},
-{w:"متأخر",wt:2},{w:"متأخرة",wt:2},{w:"لا يستجيب",wt:3},{w:"ما يستجيب",wt:3},
-
-/* غلاء */
-{w:"غالي",wt:2},{w:"غالية",wt:2},{w:"مكلف",wt:2},{w:"مكلفة",wt:2},{w:"أسعار عالية",wt:3},
-{w:"غالي جداً",wt:3},{w:"باهظ",wt:3},{w:"باهظة",wt:3},{w:"باهظ الثمن",wt:3},
-{w:"ما يستاهل السعر",wt:4},{w:"غبن",wt:3},
-
-/* تعابير عامية سلبية */
-{w:"ما أنصح",wt:3},{w:"لا أنصح",wt:3},{w:"ما ينصح به",wt:3},{w:"غير منصوح",wt:3},
-{w:"بعيد",wt:1},{w:"مرفوض",wt:3},{w:"مرفوضة",wt:3},{w:"رفضت",wt:2},{w:"لا يستاهل",wt:3},
-{w:"مو زين",wt:3},{w:"مو تمام",wt:3},{w:"ما زين",wt:3},{w:"مو راضي",wt:3},
-{w:"مو مرتاح",wt:3},{w:"للأسف",wt:2},{w:"مع الأسف",wt:2},{w:"مع اسف",wt:2},
-{w:"يا ليت",wt:2},{w:"ياليت",wt:2},{w:"صراحة مايصير",wt:3},{w:"اسوأ",wt:3},
-{w:"أسوأ",wt:3},{w:"الأسوأ",wt:4},{w:"الأردأ",wt:4},{w:"مو مقبول",wt:3},
-{w:"غير مقبول",wt:3},{w:"لا يليق",wt:3},{w:"ما يليق",wt:3},{w:"مؤسف",wt:3},
-{w:"مؤسفة",wt:3},{w:"مؤلم",wt:2},{w:"صعب",wt:1},{w:"صعبة",wt:1},{w:"متعب",wt:2},
-{w:"متعبة",wt:2},{w:"تعبت",wt:2},{w:"مرهق",wt:2},{w:"مرهقة",wt:2},{w:"إرهاق",wt:2},
-{w:"ارهاق",wt:2},{w:"مضيعة",wt:3},{w:"ضياع",wt:2},{w:"مشتكي",wt:2},{w:"شكوى",wt:2},
-{w:"شكاوى",wt:2},{w:"ردود فعل سلبية",wt:3},{w:"بيلف",wt:2},{w:"يلف",wt:2},
-{w:"زبالة",wt:4},{w:"قمامة",wt:4},{w:"نفايات",wt:4},{w:"حقير",wt:4},{w:"حقيرة",wt:4},
-{w:"مهين",wt:3},{w:"مهانة",wt:3},{w:"إهانة",wt:3},{w:"اهانة",wt:3},{w:"استهتار",wt:3},
-{w:"استهانة",wt:3},{w:"تجاهل",wt:2},{w:"تجاهلوني",wt:3},{w:"أهملوني",wt:3},
-{w:"مافي اهتمام",wt:3},{w:"بدون اهتمام",wt:3},{w:"ما اهتموا",wt:3},
-
-/* ── ENGLISH NEGATIVE ── */
-/* general bad */
-{w:"bad",wt:2},{w:"terrible",wt:3},{w:"horrible",wt:3},{w:"awful",wt:3},{w:"dreadful",wt:3},
-{w:"atrocious",wt:4},{w:"appalling",wt:4},{w:"abysmal",wt:4},{w:"dreadful",wt:3},
-{w:"pathetic",wt:3},{w:"deplorable",wt:4},{w:"disgraceful",wt:4},{w:"shameful",wt:3},
-{w:"shameless",wt:3},{w:"embarrassing",wt:3},{w:"laughable",wt:3},{w:"ridiculous",wt:3},
-{w:"absurd",wt:2},{w:"nonsense",wt:2},{w:"trash",wt:3},{w:"garbage",wt:3},{w:"junk",wt:3},
-{w:"worthless",wt:4},{w:"useless",wt:3},{w:"pointless",wt:3},{w:"hopeless",wt:3},
-{w:"helpless",wt:2},{w:"clueless",wt:2},{w:"incompetent",wt:3},{w:"unprofessional",wt:3},
-{w:"amateur",wt:2},{w:"amateurish",wt:3},{w:"sloppy",wt:2},{w:"shoddy",wt:3},
-{w:"subpar",wt:3},{w:"substandard",wt:3},{w:"inferior",wt:3},{w:"poor",wt:2},
-{w:"lousy",wt:3},{w:"crappy",wt:3},{w:"mediocre",wt:2},{w:"lackluster",wt:2},
-{w:"uninspired",wt:2},{w:"bland",wt:2},{w:"generic",wt:1},{w:"boring",wt:1},
-{w:"dull",wt:1},{w:"tedious",wt:2},{w:"monotonous",wt:2},
-
-/* worst */
-{w:"worst",wt:4},{w:"absolute worst",wt:5},{w:"the worst",wt:4},{w:"the absolute worst",wt:5},
-{w:"by far the worst",wt:5},{w:"hands down the worst",wt:5},{w:"rock bottom",wt:4},
-{w:"hit rock bottom",wt:4},{w:"lowest of the low",wt:5},{w:"0 stars",wt:5},
-{w:"zero stars",wt:5},{w:"1 star",wt:4},{w:"one star",wt:4},{w:"1/10",wt:4},
-{w:"0/10",wt:5},{w:"wouldn't recommend",wt:3},{w:"do not recommend",wt:3},
-{w:"don't recommend",wt:3},{w:"avoid",wt:3},{w:"stay away",wt:3},{w:"steer clear",wt:3},
-
-/* emotions */
-{w:"hate",wt:3},{w:"hated",wt:3},{w:"despise",wt:4},{w:"loathe",wt:4},{w:"detest",wt:4},
-{w:"disgusting",wt:4},{w:"disgust",wt:3},{w:"revolting",wt:4},{w:"repulsive",wt:4},
-{w:"nauseating",wt:3},{w:"sickening",wt:3},{w:"infuriating",wt:3},{w:"frustrating",wt:3},
-{w:"frustration",wt:2},{w:"annoying",wt:2},{w:"irritating",wt:2},{w:"aggravating",wt:3},
-{w:"maddening",wt:3},{w:"disappointing",wt:3},{w:"disappointed",wt:3},{w:"disappointment",wt:3},
-{w:"let down",wt:3},{w:"let me down",wt:3},{w:"let us down",wt:3},{w:"heartbroken",wt:3},
-{w:"devastated",wt:4},{w:"furious",wt:3},{w:"angry",wt:2},{w:"outraged",wt:3},{w:"upset",wt:2},
-{w:"unhappy",wt:2},{w:"miserable",wt:3},{w:"depressed",wt:2},{w:"distressed",wt:2},
-
-/* fraud & scam */
-{w:"scam",wt:5},{w:"fraud",wt:5},{w:"fraudulent",wt:5},{w:"con",wt:4},{w:"rip-off",wt:4},
-{w:"ripoff",wt:4},{w:"ripped off",wt:4},{w:"overcharged",wt:3},{w:"overpriced",wt:3},
-{w:"robbery",wt:4},{w:"highway robbery",wt:4},{w:"daylight robbery",wt:4},{w:"theft",wt:4},
-{w:"deceptive",wt:4},{w:"misleading",wt:3},{w:"dishonest",wt:3},{w:"untrustworthy",wt:3},
-{w:"unreliable",wt:3},{w:"unethical",wt:4},{w:"illegal",wt:4},{w:"corrupt",wt:4},
-{w:"corruption",wt:4},{w:"manipulative",wt:3},
-
-/* technical */
-{w:"broken",wt:3},{w:"not working",wt:3},{w:"doesn't work",wt:3},{w:"doesn't work",wt:3},
-{w:"stopped working",wt:3},{w:"crashed",wt:3},{w:"crash",wt:2},{w:"error",wt:2},
-{w:"bug",wt:2},{w:"glitch",wt:2},{w:"lag",wt:2},{w:"lagging",wt:2},{w:"laggy",wt:2},
-{w:"slow",wt:2},{w:"sluggish",wt:2},{w:"unresponsive",wt:3},{w:"frozen",wt:2},
-{w:"won't load",wt:2},{w:"fails",wt:2},{w:"fail",wt:2},{w:"failure",wt:3},{w:"malfunction",wt:3},
-{w:"defective",wt:3},{w:"faulty",wt:3},{w:"damaged",wt:2},{w:"broken down",wt:3},
-
-/* service */
-{w:"rude",wt:3},{w:"condescending",wt:3},{w:"dismissive",wt:3},{w:"inattentive",wt:2},
-{w:"unresponsive",wt:3},{w:"uncaring",wt:2},{w:"unhelpful",wt:3},{w:"incompetent staff",wt:4},
-{w:"bad service",wt:4},{w:"terrible service",wt:5},{w:"horrible service",wt:5},
-{w:"awful service",wt:5},{w:"poor service",wt:4},{w:"worst service",wt:5},
-{w:"no support",wt:3},{w:"no help",wt:2},{w:"ignored",wt:3},{w:"disrespected",wt:3},
-{w:"insulting",wt:3},{w:"humiliating",wt:3},{w:"demeaning",wt:3},
-
-/* speed & time */
-{w:"delayed",wt:2},{w:"delay",wt:2},{w:"late",wt:1},{w:"too late",wt:2},{w:"overdue",wt:2},
-{w:"waited forever",wt:3},{w:"waiting forever",wt:3},{w:"took too long",wt:2},{w:"ages",wt:2},
-{w:"forever",wt:2},{w:"endless wait",wt:3},{w:"no-show",wt:3},{w:"ghosted",wt:3},
-
-/* regret */
-{w:"regret",wt:3},{w:"regretted",wt:3},{w:"regrettable",wt:3},{w:"waste of money",wt:4},
-{w:"waste of time",wt:4},{w:"wasted",wt:3},{w:"wasted money",wt:4},{w:"wasted time",wt:4},
-{w:"not worth it",wt:3},{w:"not worth",wt:3},{w:"not worth the price",wt:3},
-{w:"total waste",wt:4},{w:"complete waste",wt:4},{w:"utter waste",wt:4},{w:"never again",wt:4},
-{w:"never buy",wt:3},{w:"won't buy again",wt:3},{w:"won't use again",wt:3},
-{w:"won't be back",wt:3},{w:"last time",wt:2},{w:"unacceptable",wt:3},{w:"inexcusable",wt:3},
-];
-
-/* ── EXTENDED ARABIC POSITIVE (extra batch) ── */
-const POS_EXTRA = [
-/* علاقات اجتماعية إيجابية */
-{w:"صديق",wt:1},{w:"صديقي",wt:1},{w:"أخي",wt:1},{w:"أختي",wt:1},{w:"حبيبي",wt:2},
-{w:"حبيبتي",wt:2},{w:"عزيزي",wt:2},{w:"عزيزتي",wt:2},{w:"غالي",wt:2},{w:"غالية",wt:2},
-{w:"محبوب",wt:2},{w:"محبوبة",wt:2},{w:"قريبي",wt:1},{w:"أهلي",wt:1},{w:"ناسي",wt:1},
-{w:"شلتي",wt:1},{w:"جماعتي",wt:1},{w:"مجتمع رائع",wt:3},{w:"بيئة ممتازة",wt:3},
-{w:"فريق رائع",wt:4},{w:"فريق ممتاز",wt:4},{w:"فريق احترافي",wt:4},{w:"تعاون رائع",wt:3},
-
-/* أفعال إيجابية */
-{w:"أحب",wt:2},{w:"احب",wt:2},{w:"أعشق",wt:3},{w:"اعشق",wt:3},{w:"أفضل",wt:2},
-{w:"أتمنى",wt:1},{w:"اتمنى",wt:1},{w:"أنجح",wt:2},{w:"انجح",wt:2},{w:"أكمل",wt:1},
-{w:"أتقن",wt:3},{w:"أبدع",wt:3},{w:"ابدع",wt:3},{w:"أبتكر",wt:3},{w:"ابتكر",wt:3},
-{w:"أطور",wt:2},{w:"أحسن",wt:2},{w:"يطور",wt:2},{w:"يحسن",wt:2},{w:"يبدع",wt:3},
-{w:"يتميز",wt:3},{w:"يتفوق",wt:3},{w:"يتقن",wt:3},{w:"يتحسن",wt:2},{w:"يتطور",wt:2},
-
-/* مشاعر دافئة */
-{w:"دفء",wt:2},{w:"دفيء",wt:2},{w:"حنان",wt:2},{w:"عطف",wt:2},{w:"لطف",wt:2},
-{w:"رقة",wt:2},{w:"أنس",wt:2},{w:"صفاء",wt:2},{w:"هدوء",wt:2},{w:"سكينة",wt:2},
-{w:"راحة البال",wt:3},{w:"اطمئنان",wt:2},{w:"أمان",wt:2},{w:"ثقة بالنفس",wt:2},
-{w:"إيجابية",wt:2},{w:"تفاؤل",wt:2},{w:"أمل",wt:2},{w:"طموح",wt:2},{w:"إرادة",wt:2},
-{w:"عزيمة",wt:2},{w:"إصرار",wt:2},{w:"مثابرة",wt:2},{w:"صبر",wt:2},
-
-/* جودة المنتج/الخدمة */
-{w:"منتج رائع",wt:4},{w:"منتج ممتاز",wt:4},{w:"منتج جيد",wt:3},{w:"منتج جديد",wt:1},
-{w:"منتج مميز",wt:3},{w:"منتج احترافي",wt:4},{w:"سلعة جيدة",wt:3},{w:"بضاعة ممتازة",wt:4},
-{w:"مواصفات عالية",wt:3},{w:"جودة عالية",wt:4},{w:"جودة ممتازة",wt:4},{w:"جودة رائعة",wt:4},
-{w:"متانة",wt:2},{w:"متين",wt:2},{w:"متينة",wt:2},{w:"صلب",wt:2},{w:"صلبة",wt:2},
-{w:"قوي البناء",wt:3},{w:"لا يتعطل",wt:3},{w:"لا تتعطل",wt:3},{w:"تدوم",wt:2},
-{w:"يدوم",wt:2},{w:"طويل العمر",wt:3},{w:"فترة ضمان",wt:2},{w:"ضمان طويل",wt:3},
-
-/* تسوق وتجارة */
-{w:"سعر ممتاز",wt:4},{w:"سعر رائع",wt:4},{w:"سعر مناسب",wt:3},{w:"سعر معقول",wt:3},
-{w:"عرض رائع",wt:3},{w:"عرض ممتاز",wt:3},{w:"خصم كبير",wt:3},{w:"تخفيض",wt:2},
-{w:"توفير",wt:2},{w:"ادخار",wt:2},{w:"اقتصادي",wt:2},{w:"بأسعار مناسبة",wt:3},
-{w:"بسعر معقول",wt:3},{w:"بسعر مناسب",wt:3},{w:"يستحق المال",wt:3},
-{w:"فعلاً يستاهل",wt:3},{w:"يستاهل كل ريال",wt:4},{w:"يستحق كل قرش",wt:4},
-{w:"صفقة رائعة",wt:4},{w:"صفقة ممتازة",wt:4},{w:"شراء موفق",wt:3},
-
-/* تعليم وتطوير */
-{w:"تعليم ممتاز",wt:4},{w:"شرح رائع",wt:4},{w:"شرح واضح",wt:3},{w:"سهل الفهم",wt:3},
-{w:"مفيد جداً",wt:3},{w:"مفيد",wt:2},{w:"مفيدة",wt:2},{w:"ثري بالمحتوى",wt:3},
-{w:"محتوى رائع",wt:4},{w:"محتوى ممتاز",wt:4},{w:"محتوى قيم",wt:3},{w:"قيم",wt:2},
-{w:"قيمة",wt:2},{w:"ثمين",wt:2},{w:"ثمينة",wt:2},{w:"مفيد للغاية",wt:4},
-{w:"استفدت كثيراً",wt:4},{w:"استفدت",wt:2},{w:"تعلمت",wt:2},{w:"طورت نفسي",wt:3},
-
-/* مطاعم وطعام */
-{w:"لذيذ",wt:3},{w:"لذيذة",wt:3},{w:"لذة",wt:3},{w:"طعم رائع",wt:4},{w:"طعم ممتاز",wt:4},
-{w:"شهي",wt:3},{w:"شهية",wt:3},{w:"نكهة رائعة",wt:4},{w:"نكهة ممتازة",wt:4},
-{w:"طازج",wt:2},{w:"طازجة",wt:2},{w:"أكل ممتاز",wt:4},{w:"أكل رائع",wt:4},
-{w:"مطعم رائع",wt:4},{w:"مطعم ممتاز",wt:4},{w:"مطعم نظيف",wt:3},{w:"نظافة ممتازة",wt:4},
-{w:"جو رائع",wt:3},{w:"أجواء رائعة",wt:3},{w:"أجواء ممتازة",wt:3},
-{w:"خدمة الطاولة",wt:2},{w:"ويتر لطيف",wt:3},{w:"سيرفس ممتاز",wt:4},
-{w:"يستاهل الزيارة",wt:3},{w:"يستحق التكرار",wt:3},
-
-/* سفر وسياحة */
-{w:"فندق رائع",wt:4},{w:"فندق ممتاز",wt:4},{w:"غرفة نظيفة",wt:3},{w:"غرفة مريحة",wt:3},
-{w:"إقامة رائعة",wt:4},{w:"إقامة ممتازة",wt:4},{w:"استقبال رائع",wt:3},{w:"ترحيب رائع",wt:3},
-{w:"موقع ممتاز",wt:3},{w:"إطلالة رائعة",wt:4},{w:"مشهد خلاب",wt:4},{w:"منظر رائع",wt:3},
-{w:"رحلة رائعة",wt:4},{w:"رحلة ممتازة",wt:4},{w:"سفر ممتع",wt:3},{w:"سفر رائع",wt:3},
-{w:"موصى بالزيارة",wt:3},{w:"يستحق الزيارة",wt:3},{w:"يستاهل السفر",wt:4},
-
-/* تقنية وتطبيقات */
-{w:"تطبيق رائع",wt:4},{w:"تطبيق ممتاز",wt:4},{w:"سهل الاستخدام",wt:3},
-{w:"واجهة رائعة",wt:3},{w:"واجهة ممتازة",wt:3},{w:"تصميم رائع",wt:3},
-{w:"تصميم ممتاز",wt:3},{w:"أداء ممتاز",wt:4},{w:"أداء رائع",wt:4},
-{w:"أداء قوي",wt:3},{w:"استجابة سريعة",wt:3},{w:"سريع الاستجابة",wt:3},
-{w:"بدون مشاكل",wt:3},{w:"بدون أخطاء",wt:3},{w:"يعمل بشكل ممتاز",wt:4},
-{w:"يشتغل زين",wt:3},{w:"يشتغل تمام",wt:3},{w:"تحديث رائع",wt:3},
-{w:"تحديث ممتاز",wt:3},{w:"فيتشرات رائعة",wt:3},{w:"مزايا رائعة",wt:3},
-
-/* وصف الأشخاص */
-{w:"إنسان طيب",wt:3},{w:"شخص رائع",wt:3},{w:"شخص ممتاز",wt:3},{w:"إنسان محترم",wt:3},
-{w:"شخص محترم",wt:3},{w:"شخص محبوب",wt:3},{w:"شخص ذكي",wt:3},{w:"شخص موهوب",wt:3},
-{w:"شخص مخلص",wt:3},{w:"مخلص",wt:2},{w:"مخلصة",wt:2},{w:"وفي",wt:2},{w:"وفية",wt:2},
-{w:"أمين",wt:2},{w:"أمينة",wt:2},{w:"نظيف القلب",wt:3},{w:"طيب القلب",wt:3},
-
-/* ألقاب وإعجاب */
-{w:"أستاذ",wt:2},{w:"أستاذي",wt:2},{w:"دكتور",wt:2},{w:"دكتوري",wt:2},{w:"شيخ",wt:1},
-{w:"معلمي",wt:2},{w:"أستاذنا",wt:2},{w:"الأستاذ",wt:2},{w:"الخبير",wt:2},{w:"المحترف",wt:3},
-{w:"المتميز",wt:3},{w:"المبدع",wt:3},{w:"العملاق",wt:3},{w:"الأسطورة",wt:4},
-{w:"أسطورة",wt:4},{w:"القمة",wt:3},{w:"قمة",wt:3},{w:"الأعلى",wt:3},{w:"التميز",wt:3},
-
-/* ── EXTENDED ENGLISH POSITIVE ── */
-{w:"splendid",wt:3},{w:"exquisite",wt:4},{w:"magnificent",wt:4},{w:"glorious",wt:3},
-{w:"radiant",wt:3},{w:"dazzling",wt:3},{w:"enchanting",wt:3},{w:"charming",wt:2},
-{w:"delicious",wt:3},{w:"scrumptious",wt:3},{w:"delectable",wt:3},{w:"heavenly",wt:4},
-{w:"divine",wt:4},{w:"sublime",wt:4},{w:"majestic",wt:4},{w:"noble",wt:2},
-{w:"honorable",wt:2},{w:"dignified",wt:2},{w:"refined",wt:2},{w:"polished",wt:2},
-{w:"sophisticated",wt:3},{w:"cultured",wt:2},{w:"educated",wt:2},{w:"insightful",wt:2},
-{w:"thoughtful",wt:2},{w:"considerate",wt:2},{w:"compassionate",wt:2},{w:"empathetic",wt:2},
-{w:"sincere",wt:2},{w:"genuine",wt:2},{w:"authentic",wt:2},{w:"real",wt:1},
-{w:"honest",wt:2},{w:"transparent",wt:2},{w:"fair",wt:2},{w:"just",wt:2},
-{w:"balanced",wt:2},{w:"objective",wt:2},{w:"impartial",wt:2},{w:"unbiased",wt:2},
-{w:"open-minded",wt:2},{w:"flexible",wt:2},{w:"adaptable",wt:2},{w:"versatile",wt:2},
-{w:"dynamic",wt:2},{w:"energetic",wt:2},{w:"vibrant",wt:2},{w:"lively",wt:2},
-{w:"spirited",wt:2},{w:"passionate",wt:2},{w:"dedicated",wt:2},{w:"committed",wt:2},
-{w:"focused",wt:2},{w:"driven",wt:2},{w:"determined",wt:2},{w:"persistent",wt:2},
-{w:"diligent",wt:2},{w:"hardworking",wt:2},{w:"industrious",wt:2},{w:"tenacious",wt:2},
-{w:"resilient",wt:2},{w:"steadfast",wt:2},{w:"loyal",wt:2},{w:"faithful",wt:2},
-{w:"devoted",wt:2},{w:"reliable",wt:2},{w:"dependable",wt:2},{w:"consistent",wt:2},
-{w:"trustworthy",wt:3},{w:"responsible",wt:2},{w:"accountable",wt:2},{w:"integrity",wt:3},
-{w:"honorable",wt:2},{w:"principled",wt:2},{w:"ethical",wt:2},{w:"moral",wt:2},
-{w:"upright",wt:2},{w:"virtuous",wt:2},{w:"righteous",wt:2},{w:"noble",wt:2},
-{w:"generous",wt:2},{w:"charitable",wt:2},{w:"philanthropic",wt:2},{w:"benevolent",wt:2},
-{w:"altruistic",wt:2},{w:"selfless",wt:2},{w:"giving",wt:2},{w:"supportive",wt:2},
-{w:"encouraging",wt:2},{w:"uplifting",wt:2},{w:"inspiring",wt:2},{w:"motivating",wt:2},
-{w:"empowering",wt:2},{w:"transformative",wt:3},{w:"life-changing",wt:4},{w:"life changing",wt:4},
-{w:"game-changer",wt:4},{w:"game changer",wt:4},{w:"paradigm shift",wt:3},
-{w:"next level",wt:3},{w:"leveled up",wt:3},{w:"exceeded",wt:3},{w:"surpassed",wt:3},
-{w:"outperformed",wt:3},{w:"over-delivered",wt:4},{w:"over delivered",wt:4},
-{w:"more than expected",wt:3},{w:"above and beyond",wt:4},{w:"went above",wt:4},
-{w:"went beyond",wt:3},{w:"extra mile",wt:3},{w:"went the extra",wt:3},
-{w:"attention to detail",wt:3},{w:"meticulous",wt:3},{w:"thorough",wt:2},{w:"detailed",wt:2},
-{w:"precise",wt:2},{w:"accurate",wt:2},{w:"spot on",wt:3},{w:"right on",wt:2},
-{w:"on point",wt:3},{w:"nail it",wt:3},{w:"nailed it",wt:3},{w:"nailed",wt:3},
-{w:"crushed it",wt:3},{w:"killed it",wt:3},{w:"aced",wt:3},{w:"ace",wt:2},
-{w:"top tier",wt:4},{w:"top-tier",wt:4},{w:"elite",wt:3},{w:"premium",wt:3},
-{w:"luxury",wt:2},{w:"high-end",wt:2},{w:"high end",wt:2},{w:"boutique",wt:2},
-{w:"curated",wt:2},{w:"crafted",wt:2},{w:"handcrafted",wt:3},{w:"artisanal",wt:2},
-{w:"bespoke",wt:3},{w:"tailor-made",wt:3},{w:"customized",wt:2},{w:"personalized",wt:2},
-];
-
-/* ── EXTENDED ENGLISH NEGATIVE ── */
-const NEG_EXTRA = [
-{w:"mediocre",wt:2},{w:"subpar",wt:3},{w:"disappointing",wt:3},{w:"underwhelming",wt:3},
-{w:"below average",wt:3},{w:"below standard",wt:3},{w:"not up to standard",wt:3},
-{w:"not up to par",wt:3},{w:"lacking",wt:2},{w:"insufficient",wt:2},{w:"inadequate",wt:2},
-{w:"unsatisfactory",wt:3},{w:"unsatisfied",wt:2},{w:"dissatisfied",wt:3},{w:"displeased",wt:2},
-{w:"unhappy",wt:2},{w:"unimpressed",wt:2},{w:"unpleasant",wt:2},{w:"uncomfortable",wt:2},
-{w:"inconvenient",wt:2},{w:"problematic",wt:2},{w:"troublesome",wt:2},{w:"burdensome",wt:2},
-{w:"painful",wt:2},{w:"distressing",wt:2},{w:"upsetting",wt:2},{w:"disheartening",wt:2},
-{w:"discouraging",wt:2},{w:"demoralizing",wt:3},{w:"demeaning",wt:3},{w:"demeaning",wt:3},
-{w:"patronizing",wt:3},{w:"belittling",wt:3},{w:"humiliating",wt:3},{w:"degrading",wt:3},
-{w:"insulting",wt:3},{w:"offensive",wt:3},{w:"disrespectful",wt:3},{w:"inconsiderate",wt:2},
-{w:"negligent",wt:3},{w:"negligence",wt:3},{w:"careless",wt:2},{w:"reckless",wt:3},
-{w:"irresponsible",wt:3},{w:"unprofessional",wt:3},{w:"unethical",wt:4},{w:"immoral",wt:3},
-{w:"dishonest",wt:3},{w:"deceptive",wt:3},{w:"misleading",wt:3},{w:"manipulative",wt:3},
-{w:"exploitative",wt:4},{w:"abusive",wt:4},{w:"toxic",wt:3},{w:"harmful",wt:3},
-{w:"dangerous",wt:3},{w:"hazardous",wt:3},{w:"unsafe",wt:3},{w:"defective",wt:3},
-{w:"flawed",wt:2},{w:"broken",wt:3},{w:"damaged",wt:2},{w:"faulty",wt:3},
-{w:"malfunctioning",wt:3},{w:"non-functional",wt:3},{w:"not working",wt:3},
-{w:"stopped working",wt:3},{w:"out of order",wt:3},{w:"out of service",wt:3},
-{w:"failed",wt:2},{w:"failure",wt:3},{w:"epic fail",wt:4},{w:"complete failure",wt:4},
-{w:"total failure",wt:4},{w:"utter failure",wt:4},{w:"absolute disaster",wt:5},
-{w:"complete disaster",wt:5},{w:"total disaster",wt:5},{w:"catastrophic",wt:4},
-{w:"catastrophe",wt:4},{w:"fiasco",wt:4},{w:"debacle",wt:4},{w:"shambles",wt:3},
-{w:"mess",wt:2},{w:"chaotic",wt:2},{w:"disorganized",wt:2},{w:"incompetent",wt:3},
-{w:"clueless",wt:2},{w:"negligent",wt:3},{w:"ignorant",wt:2},{w:"oblivious",wt:2},
-{w:"indifferent",wt:2},{w:"apathetic",wt:2},{w:"uncaring",wt:2},{w:"unsympathetic",wt:2},
-{w:"unhelpful",wt:2},{w:"unresponsive",wt:3},{w:"slow response",wt:2},{w:"no response",wt:3},
-{w:"ignored my",wt:3},{w:"ignored our",wt:3},{w:"never responded",wt:3},
-{w:"still waiting",wt:2},{w:"been waiting",wt:2},{w:"waited hours",wt:3},
-{w:"waited days",wt:3},{w:"waited weeks",wt:3},{w:"waited months",wt:4},
-{w:"excessive",wt:2},{w:"outrageous",wt:3},{w:"absurd price",wt:3},{w:"ridiculous price",wt:3},
-{w:"outrageous price",wt:4},{w:"insane price",wt:3},{w:"astronomical",wt:3},
-{w:"extortionate",wt:4},{w:"price gouging",wt:4},{w:"overpriced",wt:3},{w:"overcharged",wt:3},
-{w:"false advertising",wt:4},{w:"false promises",wt:4},{w:"broken promises",wt:3},
-{w:"not as advertised",wt:3},{w:"not as described",wt:3},{w:"totally different",wt:3},
-{w:"bait and switch",wt:4},{w:"false claims",wt:4},{w:"inaccurate",wt:2},
-{w:"wrong product",wt:3},{w:"sent wrong",wt:3},{w:"missing item",wt:3},{w:"missing",wt:2},
-{w:"incomplete",wt:2},{w:"partially",wt:1},{w:"refund",wt:1},{w:"chargeback",wt:2},
-{w:"dispute",wt:2},{w:"complaint",wt:2},{w:"complain",wt:2},{w:"complaining",wt:2},
-{w:"reported",wt:2},{w:"filed a report",wt:3},{w:"legal action",wt:4},{w:"lawsuit",wt:4},
-{w:"suing",wt:4},{w:"take to court",wt:4},{w:"consumer protection",wt:3},
-
-/* ── EXTENDED ARABIC NEGATIVE ── */
-{w:"ولا يستاهل",wt:4},{w:"وايد سيء",wt:4},{w:"وايد بطيء",wt:3},{w:"وايد غالي",wt:3},
-{w:"ما يتوقعه",wt:2},{w:"أقل من التوقعات",wt:3},{w:"دون المستوى",wt:3},
-{w:"تحت المستوى",wt:3},{w:"مستوى ضعيف",wt:3},{w:"مستوى متدني",wt:3},
-{w:"متدني",wt:3},{w:"متدنية",wt:3},{w:"سافل",wt:3},{w:"سافلة",wt:3},
-{w:"حقير",wt:3},{w:"دنيء",wt:4},{w:"دنيئة",wt:4},{w:"مشين",wt:3},
-{w:"مشينة",wt:3},{w:"عار",wt:3},{w:"فاضح",wt:3},{w:"فاضحة",wt:3},
-{w:"مخجل",wt:3},{w:"مخجلة",wt:3},{w:"يخجل",wt:2},{w:"خجل",wt:2},
-{w:"مستفز",wt:3},{w:"مستفزة",wt:3},{w:"استفزاز",wt:3},{w:"مضايقة",wt:2},
-{w:"تضييق",wt:2},{w:"ظلم",wt:3},{w:"ظالم",wt:3},{w:"ظالمة",wt:3},
-{w:"تلاعب",wt:3},{w:"يتلاعب",wt:3},{w:"يتلاعبون",wt:3},{w:"استغلال",wt:4},
-{w:"يستغل",wt:3},{w:"نهب",wt:4},{w:"ينهب",wt:4},{w:"ينهبون",wt:4},
-{w:"سطو",wt:4},{w:"لصوص",wt:4},{w:"حرامية",wt:5},{w:"عصابة",wt:4},
-{w:"نصابين",wt:5},{w:"محتالين",wt:5},{w:"مزورين",wt:4},{w:"كذابين",wt:4},
-{w:"مرفوض رفضاً تاماً",wt:4},{w:"لا أقبل",wt:3},{w:"لا يقبل",wt:3},
-{w:"لا نقبل",wt:3},{w:"هذا لا يجوز",wt:3},{w:"لا يجوز",wt:2},{w:"حرام",wt:2},
-{w:"باطل",wt:2},{w:"مردود عليه",wt:3},{w:"تراجعت",wt:2},{w:"ألغيت",wt:2},
-{w:"ألغى",wt:2},{w:"إلغاء",wt:2},{w:"استرجاع",wt:2},{w:"استرداد",wt:2},
-{w:"طلب استرداد",wt:2},{w:"طلبت الاسترداد",wt:3},{w:"شكوى رسمية",wt:3},
-{w:"قدمت شكوى",wt:3},{w:"تقدمت بشكوى",wt:3},{w:"بلغت عنهم",wt:4},
-{w:"بلغنا",wt:3},{w:"للجهات المختصة",wt:4},{w:"لحماية المستهلك",wt:4},
-{w:"هيئة التجارة",wt:3},{w:"التحكيم التجاري",wt:3},
-{w:"لن أتعامل",wt:3},{w:"لن أشتري",wt:3},{w:"لن أعود",wt:3},{w:"لن أرجع",wt:3},
-{w:"آخر مرة",wt:3},{w:"آخر مرة أتعامل",wt:4},{w:"لن أوصي",wt:3},
-{w:"حذركم",wt:4},{w:"إياكم",wt:3},{w:"احذروا",wt:3},{w:"تجنبوا",wt:3},
-{w:"ابتعدوا",wt:3},{w:"لا تتعاملوا",wt:3},{w:"لا تشتروا",wt:3},
-];
-
-// Merge extended dictionaries
-POS.push(...POS_EXTRA);
-NEG.push(...NEG_EXTRA);
-
-/* ── MEGA BATCH 2 — ARABIC POS ── */
-const POS_MEGA = [
-{w:"ألذ",wt:3},{w:"أشهى",wt:3},{w:"أطيب",wt:3},{w:"أنعم",wt:3},
-{w:"ينبغي التجربة",wt:3},{w:"يجب التجربة",wt:3},{w:"إبداع حقيقي",wt:4},
-{w:"نجاح حقيقي",wt:4},{w:"احترافية حقيقية",wt:4},{w:"ممتاز من كل النواحي",wt:5},
-{w:"رائع من جميع الجهات",wt:5},{w:"لا يوجد مثيله",wt:4},{w:"لا يوجد منافس",wt:4},
-{w:"بلا منافس",wt:4},{w:"رائد",wt:3},{w:"رائدة",wt:3},{w:"الأرقى",wt:4},
-{w:"أرقى",wt:3},{w:"الأعلى مستوى",wt:4},{w:"أعلى مستوى",wt:4},
-{w:"الأعلى جودة",wt:4},{w:"أعلى جودة",wt:4},{w:"واو",wt:2},{w:"ووو",wt:2},
-{w:"صدمة إيجابية",wt:3},{w:"مفاجأة سعيدة",wt:3},{w:"مفاجأة جميلة",wt:3},
-{w:"لم أتوقع",wt:2},{w:"فاجأني إيجاباً",wt:3},{w:"انبهرت",wt:3},
-{w:"بهرني",wt:3},{w:"أبهرني",wt:3},{w:"أشعل حماسي",wt:3},
-{w:"ملهم",wt:3},{w:"ملهمة",wt:3},{w:"مشجع",wt:2},{w:"محفز",wt:2},
-{w:"يحفز",wt:2},{w:"يلهم",wt:3},{w:"بارز",wt:2},{w:"لافت",wt:2},
-{w:"مبهج",wt:2},{w:"مبهجة",wt:2},{w:"بهجة حقيقية",wt:3},
-{w:"انطباع ممتاز",wt:4},{w:"انطباع رائع",wt:4},{w:"انطباع إيجابي",wt:3},
-{w:"خدمة لا تنسى",wt:4},{w:"تجربة لا تنسى",wt:4},{w:"لن أنساها",wt:3},
-{w:"ذكرى جميلة",wt:3},{w:"ذكرى رائعة",wt:3},{w:"اكتشاف رائع",wt:3},
-{w:"وجدت ضالتي",wt:4},{w:"يلبي كل احتياجاتي",wt:4},{w:"يفوق توقعاتي",wt:4},
-{w:"فاق توقعاتي",wt:4},{w:"أفضل مما توقعت",wt:4},{w:"زيادة على توقعاتي",wt:4},
-{w:"كل شيء ممتاز",wt:4},{w:"كل شيء رائع",wt:4},{w:"كل شيء مثالي",wt:5},
-{w:"اهتمام بالتفاصيل",wt:3},{w:"عناية فائقة",wt:4},{w:"دقة فائقة",wt:4},
-{w:"بذلوا جهداً",wt:3},{w:"اجتهدوا",wt:3},{w:"ساعدني كثيراً",wt:3},
-{w:"ساعدني",wt:2},{w:"حل مشكلتي",wt:3},{w:"حلوا مشكلتي",wt:3},
-{w:"عاملوني باحترام",wt:3},{w:"عاملني باحترام",wt:3},
-{w:"شعرت بالترحيب",wt:3},{w:"شعرت بالراحة",wt:3},{w:"شعرت بالأمان",wt:3},
-{w:"شعرت بالسعادة",wt:3},{w:"شعرت بالرضا",wt:3},{w:"شعرت بالفخر",wt:3},
-{w:"أفخر",wt:2},{w:"فخور",wt:2},{w:"فخورة",wt:2},{w:"أعتز",wt:2},{w:"اعتزاز",wt:2},
-{w:"منقطع النظير",wt:4},{w:"يسحر العقول",wt:4},{w:"ساحر",wt:3},{w:"ساحرة",wt:3},
-{w:"سحر",wt:3},{w:"فتان",wt:3},{w:"فتانة",wt:3},{w:"يخطف الأنظار",wt:3},
-{w:"لافت للنظر",wt:2},{w:"يستهوي",wt:2},{w:"يستهويني",wt:2},{w:"يغري",wt:2},
-{w:"مغري",wt:2},{w:"مغرية",wt:2},{w:"جاذبية",wt:2},{w:"سحر المكان",wt:3},
-{w:"أجمل مكان",wt:4},{w:"أروع مكان",wt:4},{w:"أفضل مكان",wt:4},
-];
-
-const NEG_MEGA = [
-{w:"لم يصل",wt:2},{w:"لم أستلم",wt:2},{w:"ما استلمت",wt:2},
-{w:"ما وصل",wt:2},{w:"ما أنهوا",wt:2},{w:"تركوني",wt:2},{w:"خذلني",wt:3},
-{w:"خذلوني",wt:3},{w:"خيبوا ظني",wt:3},{w:"خيب ظني",wt:3},{w:"خاب أملي",wt:3},
-{w:"فقدت الثقة",wt:3},{w:"لم يفوا بوعودهم",wt:3},{w:"ما وفوا",wt:3},
-{w:"وعد كاذب",wt:4},{w:"وعود كاذبة",wt:4},{w:"كلام فاضي",wt:3},
-{w:"الواقع مختلف",wt:3},{w:"تباين واضح",wt:2},{w:"غير متطابق",wt:3},
-{w:"وصف غير دقيق",wt:3},{w:"إعلان مضلل",wt:4},{w:"صور مضللة",wt:3},
-{w:"عكس المتوقع",wt:3},{w:"صدمة سلبية",wt:4},{w:"أحبطني",wt:3},
-{w:"أثار غضبي",wt:3},{w:"فقدت صبري",wt:3},{w:"نفد صبري",wt:3},
-{w:"أنهكني",wt:2},{w:"استنزفني",wt:3},{w:"مضيعة للوقت",wt:3},
-{w:"مضيعة للمال",wt:3},{w:"هدر المال",wt:3},{w:"هدر الوقت",wt:3},
-{w:"لم يستحق",wt:3},{w:"ما استحق",wt:3},{w:"غبن",wt:3},
-{w:"سعر مرتفع جداً",wt:3},{w:"سعر مبالغ فيه",wt:3},{w:"سعر مجنون",wt:3},
-{w:"ما يعقل",wt:3},{w:"خيبة كاملة",wt:4},{w:"إحباط كامل",wt:4},
-{w:"كارثة كاملة",wt:5},{w:"فشل ذريع",wt:5},{w:"فشل كامل",wt:5},
-{w:"نتيجة سلبية",wt:3},{w:"نتائج سيئة",wt:3},{w:"عواقب وخيمة",wt:4},
-{w:"هذا غير مقبول",wt:3},{w:"هذا مرفوض",wt:3},{w:"انتهكوا حقوقي",wt:4},
-{w:"انتهاك صريح",wt:4},{w:"تعسف",wt:3},{w:"شروط مجحفة",wt:3},
-{w:"عقد مجحف",wt:3},{w:"بنود تعسفية",wt:3},{w:"لا مرونة",wt:2},
-{w:"بدون مرونة",wt:2},{w:"ما اهتم",wt:2},{w:"لم يهتم",wt:2},
-{w:"ما تعاملوا معي",wt:3},{w:"تجاهلوا شكواي",wt:3},{w:"أهملوا طلبي",wt:3},
-{w:"ما ردوا",wt:2},{w:"ما ردوا عليّ",wt:3},{w:"لم يردوا",wt:2},
-{w:"ردود آلية",wt:2},{w:"رد آلي",wt:1},{w:"بوت",wt:1},{w:"روبوت",wt:1},
-{w:"ما تحدثت مع إنسان",wt:2},{w:"تحويل مستمر",wt:2},{w:"حول المكالمة",wt:2},
-{w:"وضعني على انتظار",wt:2},{w:"انتظار طويل",wt:2},{w:"انتظرت كثيراً",wt:2},
-{w:"أضعت وقتي",wt:3},{w:"ضاع وقتي هباءً",wt:4},{w:"ساعات ضائعة",wt:3},
-{w:"يوم كامل ضاع",wt:4},{w:"أيام ضائعة",wt:3},{w:"أسبوع ضائع",wt:4},
-];
-
-POS.push(...POS_MEGA);
-NEG.push(...NEG_MEGA);
-
-/* ── Negation & Amplifier lists ── */
-const NEGATIONS = [
-  "not","no","never","isn't","isn't","wasn't","wasn't","aren't","don't","doesn't",
-  "didn't","can't","cannot","couldn't","wouldn't","shouldn't","won't","without",
-  "barely","hardly","scarcely","rarely","seldom","neither","nor","nothing","nobody",
-  "nowhere","none","lack","lacking","lacks","absent","absence","free from","devoid",
-  "مو","ما","لا","مش","مب","مو من","لم","ليس","ليست","لن","غير","دون",
-  "بدون","بلا","بغير","ما هو","مافي","ما في","مو هو","مو هي","لا يوجد",
-  "لا توجد","لم يكن","لم تكن","لم يعد","لم تعد","لن يكون","لن تكون",
-];
-
-const AMPLIFIERS = [
-  // Arabic
-  "جداً","جدا","جداً جداً","كثير","وايد","أوي","جداً أوي","كثيراً","للغاية",
-  "بشدة","بقوة","تماماً","تماما","مطلقاً","مطلقا","بالكامل","كل الـ",
-  "أكثر من","أكثر بكثير","بكثير","بمراحل","بفارق كبير","لا حدود",
-  // English
-  "very","really","so","extremely","absolutely","totally","completely","utterly",
-  "incredibly","insanely","unbelievably","remarkably","extraordinarily","exceptionally",
-  "genuinely","truly","deeply","profoundly","intensely","highly","super","ultra",
-  "mega","beyond","way","far","much","greatly","immensely","enormously",
-  "overwhelmingly","undeniably","undoubtedly","without question","by far",
-];
-
-/* ── Init UI ── */
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('sh-pos').textContent   = POS.length.toLocaleString('ar-SA');
-  document.getElementById('sh-neg').textContent   = NEG.length.toLocaleString('ar-SA');
-  document.getElementById('sh-total').textContent = (POS.length + NEG.length).toLocaleString('ar-SA');
-});
-
-/* ── helpers ── */
-function onInput() {
+// ── Char Counter ──
+function updateChar() {
   const t = document.getElementById('inputText');
-  const n = Math.min(t.value.length, 1000);
-  document.getElementById('charCount').textContent = n + ' / 1000';
-  if (t.value.length > 1000) t.value = t.value.slice(0, 1000);
+  const c = t.value.length;
+  document.getElementById('charCount').textContent = c + ' / 500';
+  if (c > 500) t.value = t.value.slice(0, 500);
 }
 
+// Ctrl+Enter to analyze
 function handleKey(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyzeText();
 }
 
-function toast(msg) {
-  const el = document.getElementById('toast');
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
-  el.classList.add('on');
-  setTimeout(() => el.classList.remove('on'), 3500);
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-/* ── LOCAL ANALYSIS ENGINE ── */
-function localAnalyze(rawText) {
-  const text = rawText.toLowerCase();
-  let posScore = 0, negScore = 0;
-  const foundPosWords = [], foundNegWords = [], negatedWords = [], ampWords = [];
-
-  function processList(list, isPos) {
-    list.forEach(({ w, wt }) => {
-      const idx = text.indexOf(w);
-      if (idx === -1) return;
-
-      const before = text.slice(Math.max(0, idx - 20), idx);
-      const around = text.slice(Math.max(0, idx - 15), idx + w.length + 15);
-      const negated = NEGATIONS.some(n => before.includes(n));
-      const amped   = AMPLIFIERS.some(a => around.includes(a));
-      let weight = amped ? wt * 2 : wt;
-      if (amped) ampWords.push(w);
-
-      if (negated) {
-        negatedWords.push(w);
-        if (isPos) negScore += weight; else posScore += weight;
-      } else {
-        if (isPos) { posScore += weight; foundPosWords.push(w); }
-        else       { negScore += weight; foundNegWords.push(w); }
-      }
-    });
-  }
-
-  processList(POS, true);
-  processList(NEG, false);
-
-  const net   = posScore - negScore;
-  const total = posScore + negScore;
-  let sentiment = 'Neutral';
-  if (net > 0) sentiment = 'Positive';
-  if (net < 0) sentiment = 'Negative';
-
-  let confidence = 'N/A';
-  if (total > 0) {
-    const ratio = Math.abs(net) / total;
-    if (ratio >= .75 && total >= 6)       confidence = 'عالية جداً';
-    else if (ratio >= .55 && total >= 4)  confidence = 'عالية';
-    else if (ratio >= .35 || total >= 3)  confidence = 'متوسطة';
-    else                                   confidence = 'منخفضة';
-  }
-
-  return {
-    sentiment, confidence, net, posScore, negScore,
-    foundPosWords, foundNegWords, negatedWords, ampWords,
-    allFound: [...foundPosWords, ...foundNegWords],
-    negDetected: negatedWords.length > 0,
-  };
-}
-
-/* ── MAIN ── */
+// ── Main Analyze ──
 async function analyzeText() {
   const text = document.getElementById('inputText').value.trim();
-  if (!text) { toast('الرجاء إدخال نص للتحليل'); return; }
+  if (!text) { showToast('الرجاء إدخال نص للتحليل'); return; }
 
-  const btn     = document.getElementById('btn');
-  const loading = document.getElementById('loading');
-  const result  = document.getElementById('result');
+  const btn        = document.getElementById('btn');
+  const loading    = document.getElementById('loading');
+  const resultDiv  = document.getElementById('result');
 
   btn.disabled = true;
-  loading.classList.add('on');
-  result.classList.remove('on');
+  loading.classList.add('active');
+  resultDiv.classList.remove('visible');
 
-  // Local fallback runs first — we'll try API and merge
-  const local = localAnalyze(text);
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  myHeaders.append("x-apikey", "fzXhoJL9X8Ov4tGcKp61c01hcbRZefi9eRbcS7l6GbLIFJAQ");
 
-  const headers = new Headers();
-  headers.append("Content-Type", "application/json");
-  headers.append("x-apikey", "fzXhoJL9X8Ov4tGcKp61c01hcbRZefi9eRbcS7l6GbLIFJAQ");
-
-  let apiData = null;
   try {
-    const res = await fetch("https://api-dev-isolution.xyz/v1/ai", {
-      method: 'POST', headers,
+    const response = await fetch("https://api-dev-isolution.xyz/v1/ai", {
+      method: 'POST',
+      headers: myHeaders,
       body: JSON.stringify({ text }),
-      redirect: 'follow',
+      redirect: 'follow'
     });
-    if (res.ok) {
-      const d = await res.json();
-      apiData = {
-        sentiment : d.analysis_result.sentiment,
-        confidence: d.analysis_result.confidence,
-        score     : parseInt(d.analysis_result.overall_score) || 0,
-        posScore  : parseInt(d.deep_analysis.pos_score)       || 0,
-        negScore  : parseInt(d.deep_analysis.neg_score)       || 0,
-        keywords  : d.deep_analysis.detected_keywords         || '',
-      };
+
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    const data = await response.json();
+    const a    = data.analysis_result;
+    const d    = data.deep_analysis;
+
+    renderResult({
+      sentiment : a.sentiment,
+      confidence: a.confidence,
+      score     : parseInt(a.overall_score) || 0,
+      posScore  : parseInt(d.pos_score)     || 0,
+      negScore  : parseInt(d.neg_score)     || 0,
+      keywords  : d.detected_keywords       || ''
+    });
+
+  } catch (err) {
+    console.error(err);
+    showToast('خطأ في الاتصال — تأكد من تشغيل CORS والـ API Key');
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('active');
+  }
+}
+
+// ── Render Result ──
+function renderResult({ sentiment, confidence, score, posScore, negScore, keywords }) {
+  const resultDiv = document.getElementById('result');
+  resultDiv.classList.add('visible');
+
+  // Emoji map
+  const emojiMap = { Positive: '😊', Negative: '😞', Neutral: '😐' };
+  const labelMap = { Positive: 'إيجابي', Negative: 'سلبي', Neutral: 'محايد' };
+
+  // Banner
+  const banner = document.getElementById('sentimentBanner');
+  banner.className = 'sentiment-banner ' + sentiment;
+  document.getElementById('bannerValue').textContent = labelMap[sentiment] || sentiment;
+  document.getElementById('bannerValue').className   = 'banner-value ' + sentiment;
+  document.getElementById('bannerEmoji').textContent = emojiMap[sentiment] || '🔍';
+
+  // Score bar
+  document.getElementById('scoreDisplay').textContent = (score >= 0 ? '+' : '') + score;
+  const bar = document.getElementById('barFill');
+  bar.className = 'bar-fill ' + sentiment;
+  const total = posScore + negScore;
+  const pct   = total > 0 ? Math.round((Math.max(posScore, negScore) / total) * 100) : 50;
+  setTimeout(() => { bar.style.width = pct + '%'; }, 50);
+
+  // Stats
+  document.getElementById('statPos').textContent = '+' + posScore;
+  document.getElementById('statNeg').textContent = '-' + negScore;
+  const net = posScore - negScore;
+  document.getElementById('statNet').textContent = (net >= 0 ? '+' : '') + net;
+
+  // Keywords
+  const tagsEl = document.getElementById('kwTags');
+  tagsEl.innerHTML = '';
+  if (keywords) {
+    const items = keywords.split(',').map(s => s.trim()).filter(Boolean);
+    if (items.length) {
+      items.forEach((word, i) => {
+        const tag = document.createElement('span');
+        const cls = sentiment === 'Positive' ? 'pos' : sentiment === 'Negative' ? 'neg' : 'pos';
+        tag.className = 'kw-tag ' + cls;
+        tag.style.animationDelay = (i * 0.06) + 's';
+        tag.textContent = word;
+        tagsEl.appendChild(tag);
+      });
+    } else {
+      tagsEl.innerHTML = '<span class="kw-empty">لم يتم اكتشاف كلمات مفتاحية</span>';
     }
-  } catch (_) { /* use local */ }
-
-  loading.classList.remove('on');
-  btn.disabled = false;
-
-  if (apiData) {
-    renderFromApi(apiData, local);
   } else {
-    renderFromLocal(local);
+    tagsEl.innerHTML = '<span class="kw-empty">لم يتم اكتشاف كلمات مفتاحية</span>';
   }
-}
 
-/* ── Render from API data (augmented with local) ── */
-function renderFromApi(api, local) {
-  const result = document.getElementById('result');
-  result.classList.add('on');
-
-  const sentiment = api.sentiment;
-  applyBanner(sentiment);
-
-  const score = api.score || local.net;
-  document.getElementById('scoreVal').textContent = (score >= 0 ? '+' : '') + score;
-  animateBar('fillBar', sentiment, Math.min(Math.abs(score) * 6 + 20, 100));
-
-  const posS = api.posScore || local.posScore;
-  const negS = api.negScore || local.negScore;
-  const total = posS + negS;
-  animateBar('posBar', null, total > 0 ? Math.round(posS / total * 100) : 0, true);
-  animateBar('negBar', null, total > 0 ? Math.round(negS / total * 100) : 0, false);
-
-  document.getElementById('posNum').textContent   = '+' + posS;
-  document.getElementById('negNum').textContent   = '-' + negS;
-  document.getElementById('s-net').textContent    = (score >= 0 ? '+' : '') + score;
-  document.getElementById('s-pos').textContent    = '+' + posS;
-  document.getElementById('s-neg').textContent    = '-' + negS;
-  document.getElementById('s-words').textContent  = local.allFound.length;
-
-  renderConfidence(api.confidence);
-  renderKeywords(api.keywords ? api.keywords.split(',').map(s => s.trim()).filter(Boolean) : local.allFound, sentiment, local.negatedWords);
-  renderDetails(local, 'API + Local');
-}
-
-/* ── Render from local only ── */
-function renderFromLocal(local) {
-  const result = document.getElementById('result');
-  result.classList.add('on');
-
-  applyBanner(local.sentiment);
-
-  document.getElementById('scoreVal').textContent = (local.net >= 0 ? '+' : '') + local.net;
-  animateBar('fillBar', local.sentiment, Math.min(Math.abs(local.net) * 6 + 20, 100));
-
-  const total = local.posScore + local.negScore;
-  animateBar('posBar', null, total > 0 ? Math.round(local.posScore / total * 100) : 0, true);
-  animateBar('negBar', null, total > 0 ? Math.round(local.negScore / total * 100) : 0, false);
-
-  document.getElementById('posNum').textContent  = '+' + local.posScore;
-  document.getElementById('negNum').textContent  = '-' + local.negScore;
-  document.getElementById('s-net').textContent   = (local.net >= 0 ? '+' : '') + local.net;
-  document.getElementById('s-pos').textContent   = '+' + local.posScore;
-  document.getElementById('s-neg').textContent   = '-' + local.negScore;
-  document.getElementById('s-words').textContent = local.allFound.length;
-
-  renderConfidence(local.confidence);
-  renderKeywords(local.allFound, local.sentiment, local.negatedWords);
-  renderDetails(local, 'Local Engine');
-}
-
-/* ── helpers ── */
-const EMOJI = { Positive:'😊', Negative:'😞', Neutral:'😐' };
-const LABEL = { Positive:'إيجابي', Negative:'سلبي', Neutral:'محايد' };
-
-function applyBanner(sentiment) {
-  const b = document.getElementById('banner');
-  b.className = 'banner ' + sentiment;
-  const m = document.getElementById('bannerMain');
-  m.textContent = LABEL[sentiment] || sentiment;
-  m.className   = 'banner-main ' + sentiment;
-  document.getElementById('bannerIco').textContent = EMOJI[sentiment] || '🔍';
-  document.getElementById('bannerEn').textContent  = sentiment;
-}
-
-function animateBar(id, sentiment, pct, isPos) {
-  const el = document.getElementById(id);
-  if (sentiment) el.className = 'fill ' + sentiment;
-  else           el.className = 'dual-fill ' + (isPos ? 'pos-f' : 'neg-f');
-  setTimeout(() => { el.style.width = Math.max(pct, 2) + '%'; }, 60);
-}
-
-function renderConfidence(conf) {
-  const confMap = {
-    'عالية جداً':10, 'عالية':8, 'High':8, 'متوسطة':5, 'Medium':5,
-    'منخفضة':2, 'Low':2, 'N/A':0,
-  };
-  const filled = confMap[conf] ?? 5;
-  for (let i = 0; i < 10; i++) {
-    document.getElementById('cp' + i).classList.toggle('on', i < filled);
-  }
-  const labelMap = { 'High':'عالية', 'Medium':'متوسطة', 'Low':'منخفضة', 'N/A':'غير محدد' };
-  document.getElementById('confVal').textContent = labelMap[conf] || conf;
-}
-
-function renderKeywords(words, sentiment, negated) {
-  const container = document.getElementById('kwTags');
-  container.innerHTML = '';
-  if (!words || !words.length) {
-    container.innerHTML = '<span class="kw-empty">لم يتم اكتشاف كلمات مفتاحية</span>';
-    document.getElementById('kwCount').textContent = '0';
-    return;
-  }
-  const unique = [...new Set(words)].slice(0, 30);
-  document.getElementById('kwCount').textContent = unique.length;
-  unique.forEach((word, i) => {
-    const tag = document.createElement('span');
-    const isNeg = sentiment === 'Negative';
-    tag.className = 'kw-tag ' + (isNeg ? 'n' : 'p') + (negated.includes(word) ? ' rev' : '');
-    tag.style.animationDelay = (i * 0.04) + 's';
-    tag.textContent = word;
-    container.appendChild(tag);
+  // Confidence pips
+  const confMap = { 'High': 5, 'Medium': 3, 'Low': 1, 'N/A': 0 };
+  const confLabelAr = { 'High': 'عالية', 'Medium': 'متوسطة', 'Low': 'منخفضة', 'N/A': 'غير محدد' };
+  const filled = confMap[confidence] ?? 0;
+  const pips   = document.querySelectorAll('.conf-pip');
+  pips.forEach((p, i) => {
+    p.classList.toggle('filled', i < filled);
   });
-}
-
-function renderDetails(local, source) {
-  document.getElementById('d-negate').textContent = local.negDetected
-    ? `✓ مكتشف (${local.negatedWords.slice(0,3).join('، ')})`
-    : '✗ لا يوجد';
-  document.getElementById('d-amp').textContent = local.ampWords.length
-    ? `✓ مكتشف (${[...new Set(local.ampWords)].slice(0,3).join('، ')})`
-    : '✗ لا يوجد';
-  document.getElementById('d-api').textContent = `pos:${local.posScore} | neg:${local.negScore}`;
-  document.getElementById('d-source').textContent = source;
-
-  const alert = document.getElementById('negAlert');
-  if (local.negDetected) {
-    alert.classList.add('on');
-    document.getElementById('negAlertText').textContent =
-      `تم اكتشاف نفي في: ${local.negatedWords.slice(0, 4).join('، ')} — عُكست في الحساب`;
-  } else {
-    alert.classList.remove('on');
-  }
+  document.getElementById('confText').textContent = confLabelAr[confidence] || confidence;
 }
 </script>
 </body>
