@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamza AI | محلل المشاعر الذكي</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f0f2f5; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            width: 90%; 
+            max-width: 550px; 
+        }
+        h1 { color: var(--dark); text-align: center; margin-bottom: 30px; }
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            border: 2px solid #ddd; 
+            border-radius: 12px; 
+            padding: 15px; 
+            font-size: 16px; 
+            margin-bottom: 20px; 
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+        textarea:focus { border-color: var(--primary); }
+        button { 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-size: 18px; 
+            font-weight: bold;
+            cursor: pointer; 
+            transition: 0.3s; 
+        }
+        button:hover { background: #2980b9; transform: translateY(-2px); }
+        #result { margin-top: 30px; display: none; border-top: 2px solid #eee; padding-top: 20px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-item { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: center; 
+            border-bottom: 4px solid var(--primary); 
+        }
+        .sentiment-text { font-size: 22px; font-weight: bold; margin-top: 5px; }
+        .Positive { border-color: var(--success); color: var(--success); }
+        .Negative { border-color: var(--danger); color: var(--danger); }
+        .Neutral { border-color: #95a5a6; color: #95a5a6; }
+        .keywords { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
+        .loading { text-align: center; display: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>محلل المشاعر الذكي 🤖</h1>
+    <textarea id="inputText" placeholder="اكتب جملتك هنا باللغة العربية أو الإنجليزية..."></textarea>
+    <button id="btn" onclick="analyzeText()">تحليل المشاعر</button>
+    
+    <div id="loading" class="loading">جاري التحليل بمعالجات iSolutions...</div>
+
+    <div id="result">
+        <div class="stat-grid">
+            <div class="stat-item" id="sentiment-card">
+                <strong>النتيجة النهائية</strong>
+                <div id="res-sentiment" class="sentiment-text"></div>
+            </div>
+            <div class="stat-item">
+                <strong>مستوى الثقة</strong>
+                <div id="res-confidence" style="font-weight: bold;"></div>
+            </div>
+            <div class="stat-item">
+                <strong>نقاط التحليل</strong>
+                <div id="res-score" style="font-size: 20px;"></div>
+            </div>
+            <div class="stat-item">
+                <strong>الكلمات المفتاحية</strong>
+                <div id="res-words" class="keywords"></div>
+            </div>
+        </div>
+        <p style="text-align: center; font-size: 12px; color: #bdc3c7; margin-top: 20px;">
+            Powered by Hamza's Hybrid AI Engine v2.0
+        </p>
+    </div>
+</div>
+
+<script>
+    async function analyzeText() {
+        const text = document.getElementById('inputText').value;
+        const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
+        
+        if (!text.trim()) {
+            alert("يا حمزة، اكتب شيء أولاً!");
+            return;
+        }
+
+        // إظهار حالة التحميل
+        resultDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
+
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        
+        // --- ⚠️ ضع الـ API Key حقك هنا بدلاً من النجوم ---
+        myHeaders.append("x-apikey", "ضـع_مـفـتـاحـك_هـنـا"); 
+
+        const raw = JSON.stringify({ "text": text });
+
+        const requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+        };
+
+        try {
+            // --- ⚠️ تأكد من رابط البروكسي حقك في Apigee ---
+            const response = await fetch("رابط_البروكسي_حقك_هنا", requestOptions);
+            
+            if (!response.ok) throw new Error('فشل في الاتصال بالبوابة');
+            
+            const data = await response.json();
+
+            loadingDiv.style.display = 'none';
+            resultDiv.style.display = 'block';
+
+            // تعبئة البيانات
+            const sentiment = data.analysis_result.sentiment;
+            document.getElementById('res-sentiment').innerText = sentiment;
+            document.getElementById('res-sentiment').className = 'sentiment-text ' + sentiment;
+            document.getElementById('sentiment-card').className = 'stat-item ' + sentiment;
+            
+            document.getElementById('res-confidence').innerText = data.analysis_result.confidence;
+            document.getElementById('res-score').innerText = data.analysis_result.overall_score;
+            document.getElementById('res-words').innerText = data.deep_analysis.detected_keywords || "لا توجد كلمات محددة";
+
+        } catch (error) {
+            loadingDiv.style.display = 'none';
+            console.error('Error:', error);
+            alert("خطأ: تأكد من تشغيل سياسة CORS والـ API Key في Apigee");
+        }
+    }
+</script>
+
+</body>
+</html>
