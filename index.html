@@ -6,844 +6,1189 @@
 <title>Hamza AI — محلل المشاعر</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0a0f;
-  --surface: #111118;
-  --surface2: #181820;
-  --border: rgba(255,255,255,0.07);
-  --border-bright: rgba(255,255,255,0.15);
-  --text: #f0eee8;
-  --text-muted: #7a7880;
-  --text-dim: #44424e;
-  --accent: #c8f135;
-  --accent-dim: rgba(200,241,53,0.12);
-  --accent-glow: rgba(200,241,53,0.25);
-  --pos: #4ade80;
-  --pos-bg: rgba(74,222,128,0.08);
-  --neg: #f87171;
-  --neg-bg: rgba(248,113,113,0.08);
-  --neu: #94a3b8;
-  --neu-bg: rgba(148,163,184,0.08);
-  --font-ar: 'IBM Plex Sans Arabic', sans-serif;
-  --font-mono: 'Space Mono', monospace;
-  --radius: 16px;
-  --radius-sm: 10px;
-  --radius-xs: 6px;
-  --shadow: 0 32px 64px rgba(0,0,0,0.6);
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: var(--font-ar);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px 48px;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Background grid */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Radial glow background */
-body::after {
-  content: '';
-  position: fixed;
-  top: -20%;
-  right: -10%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(200,241,53,0.06) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.container {
-  width: 100%;
-  max-width: 680px;
-  position: relative;
-  z-index: 1;
-}
-
-/* ── Header ── */
-.header {
-  text-align: center;
-  margin-bottom: 40px;
-  animation: fadeDown 0.6s ease both;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--accent-dim);
-  border: 1px solid rgba(200,241,53,0.3);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  padding: 5px 14px;
-  border-radius: 99px;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-}
-
-.badge-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-  border-radius: 50%;
-  animation: pulse 2s ease infinite;
-}
-
-h1 {
-  font-size: clamp(28px, 5vw, 44px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: var(--text);
-}
-
-h1 span {
-  color: var(--accent);
-}
-
-.subtitle {
-  font-size: 15px;
-  color: var(--text-muted);
-  margin-top: 10px;
-  font-weight: 300;
-  line-height: 1.6;
-}
-
-/* ── Main Card ── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 32px;
-  animation: fadeUp 0.7s ease 0.1s both;
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
-}
-
-/* ── Textarea ── */
-.input-wrap {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.input-label {
-  display: block;
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-textarea {
-  width: 100%;
-  min-height: 140px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px 18px;
-  font-family: var(--font-ar);
-  font-size: 16px;
-  font-weight: 400;
-  color: var(--text);
-  line-height: 1.7;
-  resize: none;
-  outline: none;
-  transition: border-color 0.25s, box-shadow 0.25s;
-  caret-color: var(--accent);
-}
-
-textarea::placeholder {
-  color: var(--text-dim);
-}
-
-textarea:focus {
-  border-color: rgba(200,241,53,0.4);
-  box-shadow: 0 0 0 3px rgba(200,241,53,0.08);
-}
-
-.char-count {
-  position: absolute;
-  bottom: 12px;
-  left: 14px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-dim);
-  direction: ltr;
-}
-
-/* ── Button ── */
-.btn {
-  width: 100%;
-  background: var(--accent);
-  color: #0a0a0f;
-  border: none;
-  padding: 15px 24px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ar);
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  letter-spacing: -0.01em;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0);
-  transition: background 0.2s;
-}
-
-.btn:hover::before { background: rgba(255,255,255,0.12); }
-.btn:active { transform: scale(0.985); }
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  font-size: 20px;
-  transition: transform 0.2s;
-}
-
-.btn:hover .btn-icon { transform: rotate(-15deg); }
-
-/* ── Loading ── */
-.loading-state {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 28px 0 12px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.loading-state.active { display: flex; }
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-bright);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-.loading-dots span {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  background: var(--accent);
-  border-radius: 50%;
-  animation: dots 1.2s ease infinite;
-}
-
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-/* ── Result Section ── */
-#result {
-  display: none;
-  margin-top: 28px;
-  animation: fadeUp 0.5s ease both;
-}
-
-#result.visible { display: block; }
-
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin-bottom: 24px;
-}
-
-/* ── Sentiment Banner ── */
-.sentiment-banner {
-  border-radius: var(--radius-sm);
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  transition: all 0.4s ease;
-  border: 1px solid transparent;
-}
-
-.sentiment-banner.Positive {
-  background: var(--pos-bg);
-  border-color: rgba(74,222,128,0.2);
-}
-
-.sentiment-banner.Negative {
-  background: var(--neg-bg);
-  border-color: rgba(248,113,113,0.2);
-}
-
-.sentiment-banner.Neutral {
-  background: var(--neu-bg);
-  border-color: rgba(148,163,184,0.15);
-}
-
-.banner-label {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.banner-value {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.banner-value.Positive { color: var(--pos); }
-.banner-value.Negative { color: var(--neg); }
-.banner-value.Neutral  { color: var(--neu); }
-
-.banner-emoji {
-  font-size: 40px;
-  line-height: 1;
-}
-
-/* ── Score Bar ── */
-.score-section {
-  margin-bottom: 20px;
-}
-
-.score-label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-
-.score-label {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.score-value {
-  font-size: 13px;
-  font-family: var(--font-mono);
-  color: var(--text);
-  font-weight: 700;
-}
-
-.bar-track {
-  height: 6px;
-  background: var(--surface2);
-  border-radius: 99px;
-  overflow: hidden;
-  position: relative;
-  border: 1px solid var(--border);
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  width: 0%;
-  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
-}
-
-.bar-fill.Positive { background: var(--pos); }
-.bar-fill.Negative { background: var(--neg); }
-.bar-fill.Neutral  { background: var(--neu); }
-
-/* ── Stats Grid ── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.stat-box {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  text-align: center;
-  transition: border-color 0.2s;
-}
-
-.stat-box:hover {
-  border-color: var(--border-bright);
-}
-
-.stat-name {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.stat-num {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-family: var(--font-mono);
-}
-
-.stat-num.pos { color: var(--pos); }
-.stat-num.neg { color: var(--neg); }
-.stat-num.net { color: var(--accent); }
-
-/* ── Keywords ── */
-.keywords-section {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px 18px;
-  margin-bottom: 20px;
-}
-
-.kw-label {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-
-.kw-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.kw-tag {
-  font-size: 13px;
-  padding: 4px 12px;
-  border-radius: 99px;
-  font-family: var(--font-ar);
-  border: 1px solid;
-  animation: popIn 0.3s ease both;
-}
-
-.kw-tag.pos { background: var(--pos-bg); color: var(--pos); border-color: rgba(74,222,128,0.25); }
-.kw-tag.neg { background: var(--neg-bg); color: var(--neg); border-color: rgba(248,113,113,0.25); }
-
-.kw-empty {
-  color: var(--text-dim);
-  font-size: 13px;
-  font-style: italic;
-}
-
-/* ── Confidence Bar ── */
-.confidence-section {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.conf-label {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  min-width: 70px;
-}
-
-.conf-pips {
-  display: flex;
-  gap: 5px;
-  flex: 1;
-}
-
-.conf-pip {
-  height: 8px;
-  flex: 1;
-  border-radius: 99px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  transition: background 0.4s ease;
-}
-
-.conf-pip.filled { background: var(--accent); border-color: var(--accent); }
-
-.conf-text {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  min-width: 50px;
-  text-align: left;
-}
-
-/* ── Footer ── */
-.footer {
-  text-align: center;
-  margin-top: 32px;
-  font-size: 12px;
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  animation: fadeUp 0.8s ease 0.3s both;
-}
-
-.footer strong {
-  color: var(--text-muted);
-}
-
-/* ── Error Toast ── */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: var(--surface2);
-  border: 1px solid rgba(248,113,113,0.3);
-  color: var(--neg);
-  padding: 12px 20px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-family: var(--font-ar);
-  white-space: nowrap;
-  z-index: 99;
-  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.toast.show { transform: translateX(-50%) translateY(0); }
-
-/* ── Animations ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeDown {
-  from { opacity: 0; transform: translateY(-14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
-}
-
-@keyframes dots {
-  0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
-  40%            { transform: scale(1); opacity: 1; }
-}
-
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.85); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-/* ── Responsive ── */
-@media (max-width: 480px) {
-  .card { padding: 22px 18px; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  h1 { font-size: 26px; }
-  .banner-value { font-size: 22px; }
+:root{
+  --bg:#07080d;--sf:#0e0f18;--sf2:#161722;--sf3:#1d1e2c;
+  --b:rgba(255,255,255,0.06);--bm:rgba(255,255,255,0.11);--bh:rgba(255,255,255,0.2);
+  --tx:#eceaf4;--mu:#6e6c7e;--dm:#353444;
+  --ac:#00e5ff;--acd:rgba(0,229,255,0.1);--acg:rgba(0,229,255,0.2);
+  --pos:#22d55a;--posbg:rgba(34,213,90,0.08);--posb:rgba(34,213,90,0.22);
+  --neg:#ff4d6d;--negbg:rgba(255,77,109,0.08);--negb:rgba(255,77,109,0.22);
+  --neu:#8892b0;--neubg:rgba(136,146,176,0.08);--neub:rgba(136,146,176,0.18);
+  --warn:#ffb703;
+  --fn:'IBM Plex Sans Arabic',sans-serif;
+  --mo:'JetBrains Mono',monospace;
+  --r:14px;--rs:9px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--fn);background:var(--bg);color:var(--tx);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:32px 16px 64px;position:relative;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,0.012) 2px,rgba(0,229,255,0.012) 4px);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50%);
+  width:900px;height:600px;
+  background:radial-gradient(ellipse at center,rgba(0,229,255,0.055) 0%,transparent 65%);
+  pointer-events:none;z-index:0;
+}
+.wrap{width:100%;max-width:720px;position:relative;z-index:1}
+
+/* HEADER */
+.hdr{text-align:center;margin-bottom:44px;animation:fD .7s ease both}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--acg);background:var(--acd);
+  color:var(--ac);font-family:var(--mo);font-size:10px;
+  letter-spacing:.14em;padding:5px 16px;border-radius:99px;
+  margin-bottom:22px;text-transform:uppercase;
+}
+.bdot{width:6px;height:6px;background:var(--ac);border-radius:50%;animation:blk 1.8s ease infinite}
+h1{font-size:clamp(30px,5.5vw,52px);font-weight:700;letter-spacing:-.03em;line-height:1.1}
+h1 em{font-style:normal;color:var(--ac)}
+.tgl{font-size:14px;color:var(--mu);margin-top:12px;line-height:1.7;font-weight:300}
+
+/* CARD */
+.card{
+  background:var(--sf);border:1px solid var(--b);border-radius:var(--r);
+  padding:36px;animation:fU .7s ease .15s both;position:relative;overflow:hidden;
+}
+.ctop{position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acg),transparent)}
+
+/* TEXTAREA */
+.flbl{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.flbl span{font-family:var(--mo);font-size:11px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}
+.lpills{display:flex;gap:6px}
+.lp{font-size:10px;padding:2px 9px;border-radius:99px;font-family:var(--mo);
+    border:1px solid var(--bm);color:var(--mu);background:transparent}
+.iwrap{position:relative;margin-bottom:20px}
+textarea{
+  width:100%;min-height:150px;background:var(--sf2);border:1px solid var(--b);
+  border-radius:var(--rs);padding:18px 18px 38px;font-family:var(--fn);
+  font-size:16px;color:var(--tx);line-height:1.75;resize:none;outline:none;
+  transition:border-color .25s,box-shadow .25s;caret-color:var(--ac);
+}
+textarea::placeholder{color:var(--dm)}
+textarea:focus{border-color:rgba(0,229,255,.35);box-shadow:0 0 0 3px rgba(0,229,255,.07)}
+.crow{
+  position:absolute;bottom:10px;left:14px;right:14px;
+  display:flex;justify-content:space-between;
+}
+.cc{font-family:var(--mo);font-size:10px;color:var(--dm)}
+
+/* BUTTON */
+.btn{
+  width:100%;background:var(--ac);color:#07080d;border:none;
+  padding:16px 24px;border-radius:var(--rs);font-family:var(--fn);
+  font-size:17px;font-weight:700;cursor:pointer;transition:all .2s ease;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  letter-spacing:-.01em;position:relative;overflow:hidden;
+}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .2s}
+.btn:hover::after{background:rgba(255,255,255,.12)}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.bico{font-size:18px;transition:transform .25s}
+.btn:hover:not(:disabled) .bico{transform:scale(1.25) rotate(-10deg)}
+
+/* LOADING */
+.ldw{display:none;align-items:center;justify-content:center;gap:12px;padding:26px 0 8px;color:var(--mu);font-size:13px}
+.ldw.on{display:flex}
+.spn{width:18px;height:18px;border:2px solid var(--bm);border-top-color:var(--ac);border-radius:50%;animation:spn .65s linear infinite}
+.lds span{display:inline-block;width:4px;height:4px;background:var(--ac);border-radius:50%;animation:ld 1.1s ease infinite}
+.lds span:nth-child(2){animation-delay:.18s}
+.lds span:nth-child(3){animation-delay:.36s}
+
+/* RESULT */
+#res{display:none;margin-top:30px;animation:fU .5s ease both}
+#res.on{display:block}
+.dvd{height:1px;background:var(--b);margin-bottom:26px}
+
+/* BANNER */
+.bnr{border-radius:var(--rs);padding:22px 26px;display:flex;align-items:center;
+  justify-content:space-between;margin-bottom:22px;border:1px solid transparent;transition:all .35s}
+.bnr.Positive{background:var(--posbg);border-color:var(--posb)}
+.bnr.Negative{background:var(--negbg);border-color:var(--negb)}
+.bnr.Neutral{background:var(--neubg);border-color:var(--neub)}
+.bnr-l .sub{font-family:var(--mo);font-size:10px;letter-spacing:.1em;color:var(--mu);text-transform:uppercase;margin-bottom:5px}
+.bmain{font-size:32px;font-weight:700;letter-spacing:-.03em}
+.bmain.Positive{color:var(--pos)} .bmain.Negative{color:var(--neg)} .bmain.Neutral{color:var(--neu)}
+.bnr-r{text-align:center}
+.bico{font-size:46px;line-height:1;display:block}
+.ben{font-family:var(--mo);font-size:11px;color:var(--mu);margin-top:3px;letter-spacing:.06em}
+
+/* INTENSITY BADGE */
+.int-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.int-badge{
+  font-family:var(--mo);font-size:10px;padding:3px 10px;border-radius:99px;
+  border:1px solid;letter-spacing:.06em;text-transform:uppercase;
+}
+.int-pos{background:var(--posbg);color:var(--pos);border-color:var(--posb)}
+.int-neg{background:var(--negbg);color:var(--neg);border-color:var(--negb)}
+.int-neu{background:var(--neubg);color:var(--neu);border-color:var(--neub)}
+.int-lang{background:var(--acd);color:var(--ac);border-color:var(--acg)}
+
+/* SCORE BAR */
+.scw{margin-bottom:22px}
+.sch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.sch .lbl{font-family:var(--mo);font-size:10px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}
+.sch .val{font-family:var(--mo);font-size:14px;font-weight:700;color:var(--tx)}
+.trk{height:7px;background:var(--sf2);border-radius:99px;overflow:hidden;border:1px solid var(--b)}
+.fil{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.16,1,.3,1) .15s}
+.fil.Positive{background:linear-gradient(90deg,#1aab47,var(--pos))}
+.fil.Negative{background:linear-gradient(90deg,#cc2244,var(--neg))}
+.fil.Neutral{background:var(--neu)}
+
+/* DUAL BARS */
+.dw{margin-bottom:22px}
+.dr{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.dlbl{font-family:var(--mo);font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;width:52px;flex-shrink:0}
+.dtrk{flex:1;height:5px;background:var(--sf2);border-radius:99px;overflow:hidden;border:1px solid var(--b)}
+.dfl{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.16,1,.3,1) .25s}
+.dfl.pf{background:var(--pos)} .dfl.nf{background:var(--neg)}
+.dnum{font-family:var(--mo);font-size:11px;width:36px;text-align:right;flex-shrink:0}
+.dnum.pn{color:var(--pos)} .dnum.nn{color:var(--neg)}
+
+/* STATS */
+.sgrd{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.sb{background:var(--sf2);border:1px solid var(--b);border-radius:var(--rs);
+  padding:13px 14px;text-align:center;transition:border-color .2s,transform .2s;cursor:default}
+.sb:hover{border-color:var(--bh);transform:translateY(-2px)}
+.sbn{font-family:var(--mo);font-size:9px;color:var(--mu);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.sbv{font-family:var(--mo);font-size:20px;font-weight:700}
+.sbv.vp{color:var(--pos)} .sbv.vn{color:var(--neg)} .sbv.va{color:var(--ac)} .sbv.vne{color:var(--neu)}
+
+/* NEGATION ALERT */
+.na{display:none;align-items:center;gap:10px;background:rgba(255,183,3,.08);
+  border:1px solid rgba(255,183,3,.25);border-radius:var(--rs);padding:11px 15px;
+  margin-bottom:16px;font-size:13px;color:var(--warn)}
+.na.on{display:flex}
+
+/* AMPLIFIER ALERT */
+.aa{display:none;align-items:center;gap:10px;background:rgba(0,229,255,.06);
+  border:1px solid rgba(0,229,255,.2);border-radius:var(--rs);padding:11px 15px;
+  margin-bottom:16px;font-size:13px;color:var(--ac)}
+.aa.on{display:flex}
+
+/* CONFIDENCE */
+.cnf{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.cnfl{font-family:var(--mo);font-size:10px;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;min-width:66px}
+.cpips{display:flex;gap:5px;flex:1}
+.cpip{height:7px;flex:1;border-radius:99px;background:var(--sf2);border:1px solid var(--b);transition:all .4s ease}
+.cpip.on{background:var(--ac);border-color:var(--ac);box-shadow:0 0 6px rgba(0,229,255,.35)}
+.cnfv{font-family:var(--mo);font-size:11px;color:var(--mu);min-width:58px;text-align:left}
+
+/* KEYWORDS */
+.kwb{background:var(--sf2);border:1px solid var(--b);border-radius:var(--rs);padding:16px 18px;margin-bottom:22px}
+.kwh{font-family:var(--mo);font-size:10px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.kwc{background:var(--sf3);border:1px solid var(--bm);color:var(--mu);font-size:9px;padding:1px 7px;border-radius:99px}
+.kwt{display:flex;flex-wrap:wrap;gap:7px}
+.kwg{font-size:12px;padding:4px 11px;border-radius:99px;font-family:var(--fn);border:1px solid;
+  animation:pop .3s ease both;cursor:default;transition:transform .15s}
+.kwg:hover{transform:scale(1.05)}
+.kwg.p{background:var(--posbg);color:var(--pos);border-color:var(--posb)}
+.kwg.n{background:var(--negbg);color:var(--neg);border-color:var(--negb)}
+.kwg.rv{opacity:.6;text-decoration:line-through}
+.kwe{color:var(--dm);font-size:13px;font-style:italic}
+
+/* DETAIL GRID */
+.dgrd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.db{background:var(--sf2);border:1px solid var(--b);border-radius:var(--rs);padding:13px 15px}
+.dbn{font-family:var(--mo);font-size:9px;color:var(--mu);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.dbv{font-size:13px;color:var(--tx)}
+
+/* FOOTER */
+.ftr{text-align:center;margin-top:36px;font-family:var(--mo);font-size:11px;color:var(--dm);
+  letter-spacing:.05em;animation:fU .9s ease .3s both}
+.ftr strong{color:var(--mu)}
+
+/* TOAST */
+.tst{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--sf2);border:1px solid rgba(255,77,109,.3);color:var(--neg);
+  padding:11px 20px;border-radius:var(--rs);font-size:13px;font-family:var(--fn);
+  z-index:100;transition:transform .35s cubic-bezier(.16,1,.3,1);
+  display:flex;align-items:center;gap:9px;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.tst.on{transform:translateX(-50%) translateY(0)}
+
+/* ANIMATIONS */
+@keyframes fU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fD{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spn{to{transform:rotate(360deg)}}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes ld{0%,80%,100%{transform:scale(.4);opacity:.3}40%{transform:scale(1);opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+@media(max-width:520px){
+  .card{padding:22px 16px}
+  .sgrd{grid-template-columns:1fr 1fr}
+  .dgrd{grid-template-columns:1fr}
+  h1{font-size:26px}
+  .bmain{font-size:24px}
+  .bico{font-size:36px}
 }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="container">
-  <!-- Header -->
-  <div class="header">
-    <div class="badge">
-      <span class="badge-dot"></span>
-      Hamza AI Engine v2.0
-    </div>
-    <h1>محلل <span>المشاعر</span> الذكي</h1>
-    <p class="subtitle">تحليل النص العربي والإنجليزي بدقة عالية<br></p>
+  <div class="hdr">
+    <div class="badge"><span class="bdot"></span>Hamza AI Engine v4.0 — ULTRA</div>
+    <h1>محلل <em>المشاعر</em> الذكي</h1>
+    <p class="tgl">أقوى محرك تحليل نصي · عربي · إنجليزي · خليجي · مصري · شامي<br>كشف النفي · التضخيم · اللغة · الشدة · الثقة</p>
   </div>
 
-  <!-- Card -->
   <div class="card">
-    <label class="input-label" for="inputText">// أدخل النص للتحليل</label>
-    <div class="input-wrap">
-      <textarea
-        id="inputText"
-        placeholder="اكتب جملتك هنا… مثال: الخدمة ممتازة جداً وسريعة، شكراً جزيلاً!"
-        oninput="updateChar()"
-        onkeydown="handleKey(event)"
-      ></textarea>
-      <span class="char-count" id="charCount">0 / 500</span>
+    <div class="ctop"></div>
+    <div class="flbl">
+      <span>// أدخل النص للتحليل</span>
+      <div class="lpills"><span class="lp">AR</span><span class="lp">EN</span><span class="lp">MIX</span></div>
     </div>
-
-    <button class="btn" id="btn" onclick="analyzeText()">
-      <span class="btn-icon">⚡</span>
-      تحليل المشاعر
+    <div class="iwrap">
+      <textarea id="inp"
+        placeholder="اكتب جملتك هنا… الخدمة ممتازة جداً وسريعة! / The service was absolutely amazing!"
+        oninput="onInp()" onkeydown="onKey(event)"></textarea>
+      <div class="crow">
+        <span class="cc" id="cc">0 / 1000</span>
+        <span class="cc">Ctrl+Enter للتحليل</span>
+      </div>
+    </div>
+    <button class="btn" id="btn" onclick="run()">
+      <span class="bico">⚡</span>تحليل المشاعر
     </button>
-
-    <!-- Loading -->
-    <div class="loading-state" id="loading">
-      <div class="spinner"></div>
-      <span>جاري المعالجة...</span>
-      <div class="loading-dots">
-        <span></span><span></span><span></span>
-      </div>
+    <div class="ldw" id="ld">
+      <div class="spn"></div><span>جاري التحليل...</span>
+      <div class="lds"><span></span><span></span><span></span></div>
     </div>
 
-    <!-- Result -->
-    <div id="result">
-      <div class="divider"></div>
-
-      <!-- Banner -->
-      <div class="sentiment-banner" id="sentimentBanner">
-        <div>
-          <div class="banner-label">// النتيجة النهائية</div>
-          <div class="banner-value" id="bannerValue">—</div>
+    <div id="res">
+      <div class="dvd"></div>
+      <div class="bnr" id="bnr">
+        <div class="bnr-l">
+          <div class="sub">// النتيجة النهائية</div>
+          <div class="bmain" id="bm">—</div>
         </div>
-        <div class="banner-emoji" id="bannerEmoji">🔍</div>
-      </div>
-
-      <!-- Score Bar -->
-      <div class="score-section">
-        <div class="score-label-row">
-          <span class="score-label">// مقياس المشاعر</span>
-          <span class="score-value" id="scoreDisplay">0</span>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill" id="barFill"></div>
+        <div class="bnr-r">
+          <span class="bico" id="bi">🔍</span>
+          <div class="ben" id="be">—</div>
         </div>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-name">إيجابي</div>
-          <div class="stat-num pos" id="statPos">0</div>
+      <div class="int-row" id="intRow"></div>
+
+      <div class="na" id="na"><span>⚠</span><span id="nat">تم اكتشاف نفي</span></div>
+      <div class="aa" id="aa"><span>⬆</span><span id="aat">تم اكتشاف تضخيم</span></div>
+
+      <div class="scw">
+        <div class="sch"><span class="lbl">// درجة المشاعر</span><span class="val" id="sv">0</span></div>
+        <div class="trk"><div class="fil" id="fb"></div></div>
+      </div>
+
+      <div class="dw">
+        <div class="dr">
+          <span class="dlbl">إيجابي</span>
+          <div class="dtrk"><div class="dfl pf" id="pb"></div></div>
+          <span class="dnum pn" id="pn">0</span>
         </div>
-        <div class="stat-box">
-          <div class="stat-name">سلبي</div>
-          <div class="stat-num neg" id="statNeg">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-name">صافي</div>
-          <div class="stat-num net" id="statNet">0</div>
+        <div class="dr">
+          <span class="dlbl">سلبي</span>
+          <div class="dtrk"><div class="dfl nf" id="nb"></div></div>
+          <span class="dnum nn" id="nn">0</span>
         </div>
       </div>
 
-      <!-- Keywords -->
-      <div class="keywords-section">
-        <div class="kw-label">// الكلمات المكتشفة</div>
-        <div class="kw-tags" id="kwTags"></div>
+      <div class="sgrd">
+        <div class="sb"><div class="sbn">صافي</div><div class="sbv va" id="snet">0</div></div>
+        <div class="sb"><div class="sbn">إيجابي</div><div class="sbv vp" id="spos">0</div></div>
+        <div class="sb"><div class="sbn">سلبي</div><div class="sbv vn" id="sneg">0</div></div>
+        <div class="sb"><div class="sbn">كلمات</div><div class="sbv vne" id="swds">0</div></div>
       </div>
 
-      <!-- Confidence -->
-      <div class="confidence-section">
-        <span class="conf-label">// الثقة</span>
-        <div class="conf-pips" id="confPips">
-          <div class="conf-pip"></div>
-          <div class="conf-pip"></div>
-          <div class="conf-pip"></div>
-          <div class="conf-pip"></div>
-          <div class="conf-pip"></div>
-        </div>
-        <span class="conf-text" id="confText">—</span>
+      <div class="cnf">
+        <span class="cnfl">// الثقة</span>
+        <div class="cpips" id="cpips"></div>
+        <span class="cnfv" id="cv">—</span>
+      </div>
+
+      <div class="kwb">
+        <div class="kwh">// الكلمات المكتشفة<span class="kwc" id="kwc">0</span></div>
+        <div class="kwt" id="kwt"></div>
+      </div>
+
+      <div class="dgrd">
+        <div class="db"><div class="dbn">حالة النفي</div><div class="dbv" id="dn">—</div></div>
+        <div class="db"><div class="dbn">التضخيم</div><div class="dbv" id="da">—</div></div>
+        <div class="db"><div class="dbn">اللغة المكتشفة</div><div class="dbv" id="dl">—</div></div>
+        <div class="db"><div class="dbn">مصدر التحليل</div><div class="dbv" id="ds">—</div></div>
       </div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <div class="footer">
-    <strong>iSolutions API</strong> · Powered by Hamza's Hybrid AI Engine · 2025
-  </div>
+  <div class="ftr"><strong>iSolutions API</strong> · Hamza AI Engine v4.0 ULTRA · 2025</div>
 </div>
-
-<!-- Toast -->
-<div class="toast" id="toast">⚠ <span id="toastMsg"></span></div>
+<div class="tst" id="tst"><span>⚠</span><span id="tm"></span></div>
 
 <script>
-// ── Char Counter ──
-function updateChar() {
-  const t = document.getElementById('inputText');
-  const c = t.value.length;
-  document.getElementById('charCount').textContent = c + ' / 500';
-  if (c > 500) t.value = t.value.slice(0, 500);
-}
+// ═══════════════════════════════════════════════════════════════
+// HAMZA AI ENGINE v4.0 — ULTRA DICTIONARY
+// Weight: 1=خفيف  2=متوسط  3=قوي  4=قوي جداً  5=أقصى
+// ═══════════════════════════════════════════════════════════════
 
-// Ctrl+Enter to analyze
-function handleKey(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyzeText();
-}
+const D={
 
-// ── Toast ──
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
+// ─── ARABIC POSITIVE ──────────────────────────────────────────
+p:[
+// إطراء عام
+"ممتاز,3","ممتازة,3","ممتازين,3","رائع,3","رائعة,3","رائعين,3","جميل,2","جميلة,2",
+"مذهل,3","مذهلة,3","بديع,3","بديعة,3","روعة,3","الروعة,4","يجنن,3","جنان,3",
+"خيال,3","خرافي,3","خرافية,3","أسطوري,4","اسطوري,4","أسطورية,4","ولا أروع,4",
+"ولا اروع,4","لا يوصف,4","مثالي,4","مثالية,4","كمال,3","لا مثيل,4","لا نظير,4",
+"استثنائي,3","استثنائية,3","فريد,3","فريدة,3","متميز,3","متميزة,3","راقي,2",
+"راقية,2","فاخر,2","فاخرة,2","نخبة,2","نادر,2","نادرة,2","مميز,2","مميزة,2",
+"الأفضل,3","أفضل,2","الأحسن,3","أحسن,2","احسن,2","أجود,2","منقطع النظير,4",
+"مبهر,3","مبهرة,3","رهيب,3","رهيبة,3","عظيم,3","عظيمة,3","تحفة,3",
+"تحفة فنية,4","قمة,3","القمة,4","الأرقى,4","أرقى,3","رائد,3","رائدة,3",
+"الرائد,3","بلا منافس,4","لا يوجد منافس,4","لا يوجد مثيله,4","لا مثيل له,4",
+"ساحر,3","ساحرة,3","فتان,3","فتانة,3","يخطف الأنظار,3","أعلى مستوى,4",
+"الأعلى مستوى,4","الأعلى جودة,4","أعلى جودة,4",
 
-// ── Main Analyze ──
-async function analyzeText() {
-  const text = document.getElementById('inputText').value.trim();
-  if (!text) { showToast('الرجاء إدخال نص للتحليل'); return; }
+// شكر وامتنان
+"شكرا,2","شكراً,2","شكرًا,2","شكر,1","اشكرك,2","أشكرك,2","اشكركم,2","أشكركم,2",
+"شاكر,2","ممنون,2","ممنونة,2","ممتنن,2","ممتنة,2","تسلم,2","تسلمين,2",
+"يعطيك العافية,3","يعطيه العافية,3","يعطيكم العافية,3","يعطيكم ألف عافية,3",
+"جزاك الله خيرا,3","جزاك الله خيراً,3","بارك الله فيك,3","جزاك خير,2",
+"الله يجزاك,2","عاشت الأيادي,3","يسلمو,2","يسلموا,2","سلمت,2","سلمت يداك,3",
+"مشكور,2","مشكورة,2","مشكورين,2","الله يكافئك,2","شكراً جزيلاً,3",
+"شكرا جزيلا,3","ألف شكر,3","مليون شكر,4","تقدير,1","تقديراً,2",
+"أقدر تعبك,3","أقدر جهدك,3","جزيل الشكر,3","وافر الشكر,3","خالص الشكر,3",
 
-  const btn        = document.getElementById('btn');
-  const loading    = document.getElementById('loading');
-  const resultDiv  = document.getElementById('result');
+// سعادة ورضا
+"سعيد,2","سعيدة,2","سعادة,2","مسرور,2","مسرورة,2","فرحان,2","فرحانة,2",
+"فرح,2","فرحة,2","راضي,2","راضية,2","رضا,2","مرتاح,2","مرتاحة,2",
+"ارتياح,2","مبسوط,2","مبسوطة,2","منبسط,2","سرور,2","بهجة,2","نشوة,3",
+"غبطة,2","انبهار,2","إعجاب,2","اعجاب,2","حبور,2","انشراح,2","طمأنينة,2",
+"فرحة غامرة,4","سعادة غامرة,4","سعادة لا توصف,5","راضٍ كل الرضا,4",
+"مرتاح تماماً,3",
 
-  btn.disabled = true;
-  loading.classList.add('active');
-  resultDiv.classList.remove('visible');
+// محبة وعاطفة
+"أحب,2","احب,2","أعشق,3","اعشق,3","حب,2","عشق,3","مودة,2","محبة,2",
+"حنان,2","عطف,2","لطف,2","رقة,2","أنس,2","صفاء,2","هدوء,2","سكينة,2",
+"دفء,2","دافئ,2","دافئة,2","راحة البال,3","اطمئنان,2","أمان,2","تفاؤل,2","أمل,2",
 
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("x-apikey", "fzXhoJL9X8Ov4tGcKp61c01hcbRZefi9eRbcS7l6GbLIFJAQ");
+// جودة وكفاءة
+"جودة,2","كفاءة,2","دقة,2","احترافية,3","احترافي,3","محترف,3","محترفة,3",
+"خبير,2","خبيرة,2","ماهر,2","ماهرة,2","متقن,3","متقنة,3","إتقان,3",
+"اتقان,3","حرفي,2","حرفية,2","مهارة,2","موهبة,2","موهوب,2","موهوبة,2",
+"عبقري,3","عبقرية,3","نابغة,3","متخصص,2","متخصصة,2","متفوق,3","متفوقة,3",
+"بارع,3","بارعة,3","مبدع,3","مبدعة,3","إبداع,3","ابداع,3","ذكي,2","ذكية,2",
+"ذكاء,2","نبوغ,3","ألمعي,3","خلاق,3","مبتكر,3","مبتكرة,3","ابتكار,3",
+"احترافية حقيقية,4","إبداع حقيقي,4","نجاح حقيقي,4",
 
-  try {
-    const response = await fetch("https://api-dev-isolution.xyz/v1/ai", {
-      method: 'POST',
-      headers: myHeaders,
-      body: JSON.stringify({ text }),
-      redirect: 'follow'
+// سرعة وأداء
+"سريع,2","سريعة,2","سرعة,2","فوري,2","فورية,2","لحظي,2","نشيط,2",
+"فعّال,2","فعال,2","فعالة,2","منتج,2","منتجة,2","مجتهد,2","مجتهدة,2",
+"طموح,2","طموحة,2","استجابة سريعة,3","سريع الاستجابة,3","أداء ممتاز,4",
+"أداء رائع,4","أداء قوي,3","أداء لا يصدق,4","أداء يفوق التوقعات,4",
+"يعمل بشكل ممتاز,4","يعمل بشكل مثالي,4","يشتغل زين,3","يشتغل تمام,3",
+
+// ثقة ومصداقية
+"ثقة,2","موثوق,2","موثوقة,2","أمانة,2","امانة,2","صادق,2","صادقة,2",
+"صدق,2","نزاهة,2","شفافية,2","مصداقية,2","مضمون,2","مضمونة,2","ضمان,2",
+"معتمد,2","معتمدة,2","أمين,2","أمينة,2","وفي,2","وفية,2","مخلص,2",
+"مخلصة,2","ثقة عالية,3","مصداقية عالية,3","شفافية كاملة,3","أمانة كاملة,3",
+"جدير بالثقة,3","يستحق الثقة,3",
+
+// خدمة عملاء
+"خدمة ممتازة,4","خدمة رائعة,4","خدمة جيدة,3","خدمة عالية,3",
+"خدمة احترافية,4","خدمة لا تنسى,4","خدمة مميزة,3","خدمة من القلب,4",
+"متجاوب,2","متجاوبة,2","مساعد,2","مساعدة,2","لطيف,2","لطيفة,2",
+"مؤدب,2","مؤدبة,2","محبوب,2","محبوبة,2","ودود,2","ودودة,2","متفهم,2",
+"متفهمة,2","كريم,2","كريمة,2","سخي,2","سخية,2","حسن التعامل,3",
+"عاملوني باحترام,3","عاملني باحترام,3","شعرت بالترحيب,3","شعرت بالراحة,3",
+"شعرت بالأمان,3","شعرت بالسعادة,3","استقبال رائع,4","ترحيب رائع,3",
+
+// نجاح وإنجاز
+"ناجح,2","ناجحة,2","نجاح,2","إنجاز,2","انجاز,2","تفوق,3","برع,2","تميز,2",
+"أنجز,2","حقق,2","مكتمل,2","شامل,2","شاملة,2","متكاملة,2","كل شيء ممتاز,4",
+"كل شيء رائع,4","كل شيء مثالي,5","اهتمام بالتفاصيل,3","عناية فائقة,4",
+"دقة فائقة,4","ممتاز من كل النواحي,5","رائع من جميع الجهات,5",
+"فاق توقعاتي,4","أفضل مما توقعت,4","يفوق توقعاتي,4","زيادة على توقعاتي,4",
+
+// توصية
+"أنصح,2","انصح,2","أوصي,2","اوصي,2","ينصح به,3","موصى به,3","يستحق,2",
+"تستحق,2","يستحق التجربة,3","يستاهل التجربة,3","جرب,1","جربوه,1",
+"اجربه,1","لازم تجربه,3","لا تفوّتوه,3","يستاهل كل ريال,4",
+"يستحق كل قرش,4","شراء موفق,3","ما ندمت,3",
+
+// تعابير عامية خليجية
+"كفو,2","كفووو,3","كفوووو,4","بطل,3","أبطال,3","وناسة,3","جبار,3",
+"قوي,2","قوية,2","حلو,2","حلوة,2","والله تمام,3","تمام,2","تمام التمام,4",
+"زين,2","زينة,2","كويس,2","كويسة,2","ما شاء الله,3","ماشاء الله,3",
+"يا سلام,3","يا هلا,2","يا مرحبا,2","هلا والله,2","يعيش,2","عاش,2",
+"عاش من شافك,3","صح,2","تسلم يداك,3","يعطيك ألف عافية,3",
+"والله روعة,3","هلا هلا,2","صراحة ممتاز,3","من القلب,3","بصدق,2",
+"بصراحة ممتاز,3","واو,2","ووو,2","يا ويلي من الحلاوة,4",
+"تاخذ العقل,3","ما شفت زيه,4","ما شفت زيها,4","لو شفت,2",
+
+// مصري وشامي
+"جامد,2","جامدة,2","جامد جداً,3","أوسم,3","نيس,2","ولا في الأحلام,4",
+"طيب,1","طيبة,2","كتير حلو,3","مش عارف أشكرك,3","روعة بجد,4",
+"بجد ممتاز,3","عظيم جداً,4","اكتر من رائع,4","جاد,2","ولا في المنام,4",
+"بالجد,2","صح بالجد,3","ربنا يبارك فيك,3","الله ينعم عليك,3",
+
+// تجارب وانطباعات
+"تجربة رائعة,4","تجربة ممتازة,4","تجربة مذهلة,4","تجربة جيدة,3",
+"تجربة إيجابية,3","تجربة لا تنسى,4","تجربة فريدة,4","تجربة مميزة,3",
+"تجربة رهيبة,3","أفضل تجربة,4","تجربة استثنائية,4","أنصح بالتجربة,3",
+"انطباع ممتاز,4","انطباع رائع,4","انطباع إيجابي,3","اكتشاف رائع,3",
+"وجدت ضالتي,4","يلبي كل احتياجاتي,4","ذكرى جميلة,3","ذكرى رائعة,3",
+"خدمة لا تنسى,4","فاجأني إيجاباً,3","انبهرت,3","بهرني,3","أبهرني,3",
+"صدمة إيجابية,3","مفاجأة سعيدة,3","لن أنساها,3",
+"ملهم,3","ملهمة,3","مشجع,2","محفز,2","يحفز,2","يلهم,3",
+"مبهج,2","مبهجة,2","بهجة حقيقية,3",
+
+// مطاعم وطعام
+"لذيذ,3","لذيذة,3","لذة,3","طعم رائع,4","طعم ممتاز,4","شهي,3","شهية,3",
+"نكهة رائعة,4","نكهة ممتازة,4","طازج,2","طازجة,2","أكل ممتاز,4",
+"أكل رائع,4","مطعم رائع,4","مطعم ممتاز,4","مطعم نظيف,3",
+"نظافة ممتازة,4","جو رائع,3","أجواء رائعة,3","أجواء ممتازة,3",
+"ويتر لطيف,3","سيرفس ممتاز,4","يستاهل الزيارة,3","يستحق التكرار,3",
+"ألذ ما أكلت,4","أشهى ما تذوقت,4",
+
+// فنادق وسفر
+"فندق رائع,4","فندق ممتاز,4","غرفة نظيفة,3","غرفة مريحة,3",
+"إقامة رائعة,4","إقامة ممتازة,4","موقع ممتاز,3","إطلالة رائعة,4",
+"مشهد خلاب,4","منظر رائع,3","رحلة رائعة,4","رحلة ممتازة,4",
+"سفر ممتع,3","يستحق الزيارة,3","يستاهل السفر,4",
+"أجمل مكان,4","أروع مكان,4","أفضل مكان,4",
+
+// تقنية
+"تطبيق رائع,4","تطبيق ممتاز,4","سهل الاستخدام,3","واجهة رائعة,3",
+"تصميم رائع,3","تصميم ممتاز,3","بدون مشاكل,3","بدون أخطاء,3",
+"تحديث رائع,3","ميزات رائعة,3","مزايا رائعة,3","سلس,2","سلسة,2",
+"تقنية متقدمة,3","تقنية رائعة,3","تقنية مبتكرة,3","منصة رائعة,3",
+"موقع رائع,3","تجربة مستخدم رائعة,4","تصميم مبتكر,3",
+
+// تسوق وقيمة
+"سعر ممتاز,4","سعر رائع,4","سعر مناسب,3","سعر معقول,3",
+"عرض رائع,3","عرض ممتاز,3","خصم كبير,3","تخفيض,2","توفير,2",
+"اقتصادي,2","بأسعار مناسبة,3","يستحق المال,3","فعلاً يستاهل,3",
+"صفقة رائعة,4","صفقة ممتازة,4","شراء موفق,3","مواصفات عالية,3",
+"جودة لا تضاهى,4","جودة فائقة,4","متانة عالية,3","لا يتعطل,3",
+"يدوم طويلاً,3","طويل العمر,3",
+
+// تعليم ومحتوى
+"شرح رائع,4","شرح واضح,3","سهل الفهم,3","مفيد جداً,3","مفيد,2",
+"مفيدة,2","محتوى رائع,4","محتوى ممتاز,4","محتوى قيم,3","ثري بالمحتوى,3",
+"استفدت كثيراً,4","استفدت,2","تعلمت,2","طورت نفسي,3",
+
+// وصف الأشخاص والفرق
+"إنسان طيب,3","إنسان بارع,3","إنسان مبدع,3","إنسان موهوب,3",
+"إنسان صادق,3","إنسان محترم,3","إنسان كريم,2","شخص رائع,3",
+"شخص ممتاز,3","شخص محبوب,3","شخص ذكي,3","نظيف القلب,3",
+"طيب القلب,3","المحترف,3","المتميز,3","المبدع,3","العملاق,3",
+"الأسطورة,4","أسطورة,4","قيادة رائعة,3","قائد ملهم,3","قائد ممتاز,3",
+"مدير رائع,3","مدير ممتاز,3","فريق رائع,4","فريق ممتاز,4",
+"فريق احترافي,4","تعاون رائع,3",
+
+// فخر واعتزاز
+"أفخر,2","فخور,2","فخورة,2","أعتز,2","اعتزاز,2","فخر,2","مصدر فخر,3",
+"يستحق الإشادة,3","يستحق التقدير,3","يستحق كل الثناء,4",
+"يستحق كل التقدير,4","يستحق الإطراء,3","التزام تام,3",
+"وفاء بالوعد,3","يستحق كل الإشادة,4",
+
+// نتائج وتطور
+"نتيجة رائعة,4","نتيجة ممتازة,4","نتائج رائعة,4","نتائج ممتازة,4",
+"تقدم رائع,3","تقدم ممتاز,3","تقدم كبير,3","تطور رائع,3","تطور كبير,3",
+"إنجاز رائع,4","إنجاز ممتاز,4","نجاح كبير,3","نجاح رائع,3","نجاح ساحق,4",
+"ساعدني كثيراً,3","ساعدني,2","حل مشكلتي,3","حلوا مشكلتي,3",
+"بذلوا جهداً,3","اجتهدوا,3",
+
+// ─── ENGLISH POSITIVE ────────────────────────────────────────
+// excellence
+"excellent,3","amazing,3","awesome,3","outstanding,4","superb,4",
+"magnificent,4","brilliant,3","exceptional,3","extraordinary,4",
+"incredible,4","unbelievable,4","phenomenal,4","spectacular,4",
+"tremendous,3","marvelous,4","wonderful,3","fantastic,3","fabulous,3",
+"terrific,3","stellar,3","flawless,4","perfect,4","impeccable,4",
+"immaculate,4","spotless,3","pristine,3","ideal,3","exemplary,3",
+"matchless,4","unmatched,4","unrivaled,4","peerless,4","world-class,4",
+"top-notch,4","first-rate,4","best-in-class,4","best,3","greatest,3",
+"finest,3","supreme,4","ultimate,4","premier,3","elite,3","premium,3",
+"top tier,4","top-tier,4","next level,3","another level,3",
+"unparalleled,4","incomparable,4","without equal,4","second to none,4",
+"head and shoulders above,4","a cut above,4","class apart,4",
+"vastly superior,4","far superior,3","infinitely better,4",
+
+// positive adjectives
+"good,1","great,2","nice,1","lovely,2","delightful,2","pleasant,2",
+"pleasing,2","satisfying,2","rewarding,2","enjoyable,2","engaging,2",
+"impressive,3","remarkable,3","noteworthy,2","commendable,2",
+"praiseworthy,3","admirable,2","laudable,2","creditable,2","worthwhile,2",
+"valuable,2","helpful,2","useful,2","practical,2","convenient,2",
+"accessible,2","easy,1","simple,1","smooth,2","seamless,3","effortless,3",
+"intuitive,2","user-friendly,2","elegant,2","stylish,2","beautiful,2",
+"gorgeous,3","stunning,3","breathtaking,4","captivating,3","splendid,3",
+"exquisite,4","glorious,3","radiant,3","dazzling,3","enchanting,3",
+"charming,2","divine,4","sublime,4","majestic,4",
+
+// emotions
+"happy,2","joyful,2","cheerful,2","thrilled,3","ecstatic,4","overjoyed,4",
+"elated,3","delighted,3","excited,2","enthusiastic,2","pleased,2",
+"satisfied,2","content,2","grateful,2","thankful,2","appreciative,2",
+"relieved,2","confident,2","hopeful,2","optimistic,2","inspired,2",
+"motivated,2","proud,2","impressed,3","blown away,4","mind-blown,4",
+"speechless,3","in awe,3","awestruck,3","overwhelmed positively,3",
+"completely satisfied,4","fully satisfied,4","100% satisfied,5",
+"beyond satisfied,4","more than satisfied,3",
+"loved every bit,4","loved every moment,4","loved every aspect,4",
+"enjoyed thoroughly,3","thoroughly impressed,4","thoroughly enjoyed,3",
+
+// quality & reliability
+"quality,2","reliable,2","dependable,2","trustworthy,3","consistent,2",
+"accurate,2","precise,2","thorough,2","comprehensive,2","complete,2",
+"professional,3","expert,2","skilled,2","talented,2","capable,2",
+"competent,2","efficient,2","effective,2","productive,2","powerful,2",
+"robust,2","stable,2","secure,2","safe,2","solid,2","strong,2",
+"durable,2","long-lasting,2","built to last,3","knowledgeable,3",
+"well-trained,3","highly skilled,3","extremely talented,4",
+"exceptionally skilled,4",
+
+// service
+"responsive,2","fast,2","quick,2","prompt,2","timely,2","punctual,2",
+"attentive,2","caring,2","supportive,2","friendly,2","warm,2",
+"welcoming,2","courteous,2","polite,2","kind,2","generous,2",
+"patient,2","understanding,2","helpful staff,3","great service,4",
+"excellent service,4","top service,3","amazing service,4",
+"wonderful service,4","best service,5","exceptional service,4",
+"five-star service,4","impeccable service,4","treated like royalty,4",
+"went out of their way,4","above and beyond service,4",
+"delivered on time,3","delivered early,3","exactly as promised,3",
+"exactly as described,3","exactly what i needed,4",
+
+// recommend & value
+"recommend,2","highly recommend,4","strongly recommend,4","must try,3",
+"must-try,3","worth it,3","worth every,3","great value,3","good value,3",
+"value for money,3","affordable,2","fair price,2","reasonable,2",
+"love it,3","love this,3","loved it,3","loved this,3","i love,2",
+"amazing experience,4","great experience,4","wonderful experience,4",
+"best experience,5","5 stars,4","five stars,4","10/10,5","100/100,5",
+"would buy again,3","will return,2","coming back,2",
+"definitely coming back,3","exceeded expectations,4",
+"beyond expectations,4","above and beyond,4","went the extra mile,3",
+"went above and beyond,4","more than expected,3","over delivered,4",
+"over-delivered,4","better than expected,3","better than advertised,3",
+"lives up to the hype,3","worth the hype,3","exceeded my,3",
+"bang for your buck,3","exceptional value,4","unbeatable value,4",
+"best value,4","great investment,3","worth every cent,3",
+"worth every penny,3","arrived on time,2","arrived early,3",
+"fast shipping,3","quick delivery,3","speedy delivery,3",
+"exactly as pictured,3","looks even better in person,4",
+
+// innovation
+"innovative,3","creative,2","original,2","unique,2","groundbreaking,4",
+"revolutionary,4","cutting-edge,3","state-of-the-art,3","advanced,2",
+"sophisticated,2","smart,2","intelligent,2","clever,2","ingenious,3",
+"genius,3","game-changer,4","game changer,4","life-changing,4",
+"life changing,4","transformative,3","paradigm shift,3",
+"well-designed,2","thoughtfully designed,3","expertly crafted,3",
+"perfectly executed,4","flawlessly executed,4","polished product,3",
+"no bugs,3","runs smoothly,3","lightning fast,3","blazing fast,3",
+"zero lag,3","no issues,3","zero issues,4","seamless experience,3",
+
+// informal
+"wow,2","omg,2","insane,3","fire,3","lit,2","goat,3","the goat,3",
+"goated,3","banger,3","slaps,2","chef's kiss,4","bussin,3",
+"absolute gem,4","hidden gem,3","masterpiece,4","nailed it,3",
+"nailed,3","crushed it,3","killed it,3","aced,3","ace,2",
+"spot on,3","on point,3","on fire,3","knocked it out of the park,4",
+"blown me away,4","no complaints,3","zero complaints,3",
+"perfectly fine,2","works perfectly,3","absolutely perfect,5",
+"couldn't be better,5","can't ask for more,4",
+"couldn't be happier,4",
+
+// thanks
+"thanks,1","thank you,2","thank you so much,3","many thanks,2",
+"much appreciated,3","truly appreciate,3","i appreciate,2",
+"grateful,2","thankful,2","deeply grateful,3",
+
+// food
+"delicious,3","scrumptious,3","delectable,3","heavenly,4",
+"mouth-watering,3","mouthwatering,3","tasty,2","yummy,2",
+"divine taste,4","incredible flavor,4","amazing taste,4",
+"best food,4","best meal,4","cooked to perfection,4",
+"beautifully presented,3","generous portions,2","worth every bite,3",
+
+// character
+"honest,2","transparent,2","fair,2","genuine,2","authentic,2",
+"sincere,2","compassionate,2","empathetic,2","thoughtful,2",
+"considerate,2","open-minded,2","flexible,2","adaptable,2",
+"dynamic,2","energetic,2","vibrant,2","passionate,2","dedicated,2",
+"committed,2","focused,2","driven,2","determined,2","persistent,2",
+"diligent,2","hardworking,2","tenacious,2","resilient,2","loyal,2",
+"devoted,2","principled,2","ethical,2","responsible,2",
+"trustworthy,3","integrity,3","life-changing,4","empowering,2",
+"inspiring,2","motivating,2","uplifting,2","encouraging,2",
+
+// extra
+"bespoke,3","tailor-made,3","customized,2","personalized,2",
+"handcrafted,3","artisanal,2","curated,2","crafted,2",
+"luxury,2","high-end,2","boutique,2","exclusive,3",
+"flawless design,4","perfect design,4","great design,3",
+"clean design,2","smooth experience,3","attention to detail,3",
+"meticulous,3","no regrets,3","best decision,4","right choice,3",
+"great choice,3","smart choice,3","wise choice,3",
+],
+
+// ─── ARABIC NEGATIVE ──────────────────────────────────────────
+n:[
+// نقد عام
+"سيء,2","سيئ,2","سيئة,2","سئ,2","رديء,3","رديئة,3","رداءة,3",
+"خايس,3","خيسة,3","خايسة,3","وايع,2","واطي,2","واطية,2",
+"متردي,2","متردية,2","تدهور,2","انهيار,3","كارثة,4","كارثي,4",
+"كارثية,4","فضيحة,3","مصيبة,3","زفت,3","نعل,3","لا يسوى,3",
+"لا يساوي,3","ما يسوى,3","ما يستاهل,3","لا يستحق,3",
+"ما يستحق,3","تافه,3","تافهة,3","هراء,3","فارغ,2","فارغة,2",
+"بلا معنى,2","بلا قيمة,3","عديم الفائدة,3","عديمة الفائدة,3",
+"بدون فائدة,3","ما ينفع,3","ما تنفع,3","لا ينفع,3","لا تنفع,3",
+"نعل,3","زبالة,4","قمامة,4","نفايات,4","حقير,4","حقيرة,4",
+"لا يوصف بالسوء,4","أسوأ من سيء,4","متدني,3","متدنية,3",
+"سافل,3","سافلة,3","دنيء,4","دنيئة,4","مشين,3","مشينة,3",
+"عار,3","فاضح,3","فاضحة,3","مخجل,3","مخجلة,3",
+
+// إحباط
+"محبط,3","محبطة,3","إحباط,3","احباط,3","مخيب,3","مخيبة,3",
+"خيبة أمل,4","خيبة,3","أخفق,2","اخفق,2","إخفاق,2","اخفاق,2",
+"فشل,3","فاشل,3","فاشلة,3","فشلت,3","يفشل,2","فاشلين,3",
+"كسول,2","كسولة,2","كسل,2","إهمال,3","اهمال,3","مهمل,3",
+"مهملة,3","إحباط كامل,4","خيبة كاملة,4","فشل ذريع,5",
+"فشل كامل,5","إخفاق كبير,4","فشل مدوّي,5","كارثة كاملة,5",
+"خذلني,3","خذلوني,3","خيبوا ظني,3","خيب ظني,3","خاب أملي,3",
+"خاب ظني,3","فقدت الثقة,3","فقدت الأمل,3",
+
+// غضب
+"غاضب,3","غاضبة,3","غضب,3","زعلان,2","زعلانة,2","زعل,2",
+"أزعجني,2","ازعجني,2","أغضبني,3","اغضبني,3","سئمت,2",
+"ملّيت,2","انزعجت,2","تضايقت,2","ضيق,2","ضيقة,2","توتر,2",
+"قلق,2","جن جنوني,3","نفد صبري,3","فقدت صبري,3","أثار غضبي,3",
+"مستفز,3","مستفزة,3","استفزاز,3","مضايقة,2","تضييق,2",
+"ظلم,3","ظالم,3","ظالمة,3","غضب شديد,4","غضب بالغ,4",
+"أنهكني,2","استنزفني,3","استنزاف,2","تعبت,2","مرهق,2",
+"مرهقة,2","إرهاق,2","ارهاق,2","أحبطني,3",
+
+// خداع واحتيال
+"احتيال,5","نصب,5","غش,4","كذب,4","كذاب,4","كاذب,4","كاذبة,4",
+"خداع,4","خادع,4","خادعة,4","تدليس,4","مدلس,4","مزور,4",
+"تزوير,4","سرقة,5","سارق,5","ينصب,5","نصاب,5","محتال,5",
+"نصابين,5","محتالين,5","تلاعب,3","يتلاعب,3","استغلال,4",
+"يستغل,3","نهب,4","ينهب,4","سطو,4","لصوص,4","حرامية,5",
+"عصابة,4","وعد كاذب,4","وعود كاذبة,4","كلام فاضي,3",
+"الواقع مختلف,3","غير متطابق,3","إعلان مضلل,4","صور مضللة,3",
+"عكس المتوقع,3","تلاعب بالزبون,4","ضحكوا علينا,4",
+"ضحكوا عليه,4","احتالوا علينا,5","سرقوا وقتي,4",
+
+// ندم وخسارة
+"ندمت,3","نادم,3","نادمة,3","أتمنى ما,3","ياريتني,3",
+"يا ريتني ما,3","لو أعلم,2","لو اعلم,2","خسارة,3","خسرت,3",
+"خسارة فيه,4","خسارة وقتي,4","خسارة فلوسي,4","ضيعت وقتي,3",
+"ضاع وقتي,3","تلفت فلوسي,4","مضيعة للوقت,3","مضيعة للمال,3",
+"مضيعة للجهد,3","هدر المال,3","هدر الوقت,3","لم يستحق,3",
+"ما استحق,3","آخر مرة,3","آخر مرة أتعامل,4","لن أتعامل,3",
+"لن أشتري,3","لن أعود,3","لن أرجع,3","يوم كامل ضاع,4",
+"أيام ضائعة,3","أسبوع ضائع,4","ساعات ضائعة,3",
+"ضاع وقتي هباءً,4",
+
+// أخطاء وعطل
+"عطل,2","أعطال,2","خربان,3","خربانة,3","يتعطل,2","تعطل,2",
+"مشكلة,2","مشاكل,2","خطأ,2","غلط,2","غلطة,2","أخطاء,2",
+"خلل,2","تعطّل,2","إشكالية,2","اشكالية,2","ثغرة,2","ثغرات,2",
+"اعطال مستمرة,3","أخطاء متكررة,3","عيوب,2","معيب,2","معيبة,2",
+"جودة سيئة,4","جودة منخفضة,3","جودة ضعيفة,3","نفس المشكلة,3",
+"عادت المشكلة,3","مشكلة متكررة,3","إصلاح مؤقت,2","ترقيع,2",
+
+// بطء وتأخير
+"بطيء,2","بطيئة,2","بطء,2","تأخير,2","تأخر,2","تأخيرات,2",
+"تعطيل,2","أبطأ,2","ثقيل,2","ثقيلة,2","متأخر,2","متأخرة,2",
+"لا يستجيب,3","ما يستجيب,3","انتظار طويل,2","انتظرت كثيراً,2",
+"أضعت وقتي,3","وضعني على انتظار,2","تحويل مستمر,2",
+"ما تحدثت مع إنسان,2","ردود آلية,2","رد آلي,1","بوت,1",
+"لم يردوا,2","ما ردوا,2","ما ردوا عليّ,3","لم يهتم,2",
+"ما اهتم,2","تجاهلوا شكواي,3","أهملوا طلبي,3",
+"لم يصل,2","لم أستلم,2","ما وصل,2","لم يفوا بوعودهم,3",
+"ما وفوا,3",
+
+// غلاء
+"غالي,2","غالية,2","مكلف,2","مكلفة,2","أسعار عالية,3",
+"غالي جداً,3","باهظ,3","باهظة,3","باهظ الثمن,3",
+"ما يستاهل السعر,4","غبن,3","سعر مبالغ فيه,3","سعر مجنون,3",
+"سعر ظالم,4","سعر مرتفع جداً,3","مبالغ في السعر,3",
+"أسعار خيالية,3","أسعار مرتفعة جداً,3","فاتورة غلط,3",
+"رسوم خفية,4","أسعار مخفية,4","تغيير الأسعار فجأة,3",
+"رفع الأسعار بدون سبب,3","مبالغ في الفواتير,3",
+
+// تعابير عامية سلبية
+"ما أنصح,3","لا أنصح,3","ما ينصح به,3","مرفوض,3","مرفوضة,3",
+"مو زين,3","مو تمام,3","ما زين,3","مو راضي,3","مو مرتاح,3",
+"للأسف,2","مع الأسف,2","مع اسف,2","صراحة مايصير,3","اسوأ,3",
+"أسوأ,3","الأسوأ,4","الأردأ,4","مو مقبول,3","غير مقبول,3",
+"لا يليق,3","ما يليق,3","مؤسف,3","مؤسفة,3","مؤلم,2",
+"صعب,1","صعبة,1","متعب,2","متعبة,2","مضيعة,3","شكوى,2",
+"شكاوى,2","بيلف,2","يلف,2","وايد سيء,4","وايد بطيء,3",
+"وايد غالي,3","دون المستوى,3","تحت المستوى,3","مستوى ضعيف,3",
+
+// ضعف خدمة
+"مهين,3","مهانة,3","إهانة,3","اهانة,3","استهتار,3","استهانة,3",
+"تجاهل,2","تجاهلوني,3","أهملوني,3","مافي اهتمام,3",
+"بدون اهتمام,3","ما اهتموا,3","خدمة سيئة,5","خدمة فظيعة,5",
+"خدمة كارثية,5","خدمة ضعيفة,4","استقبال سيء,3",
+"موظف وقح,4","موظفين سيئين,4","تعامل سيء,4","تعامل مهين,4",
+"تجاهلوا شكواي,3","خذلوني,3","ما ساعدوا,2","تركوني,2",
+"فقدت الثقة,3","لن أوصي,3","لن أنصح,3",
+"حذركم,4","إياكم,3","احذروا,3","تجنبوا,3","ابتعدوا,3",
+"لا تتعاملوا,3","لا تشتروا,3",
+
+// شكاوى رسمية وقانونية
+"شكوى رسمية,3","قدمت شكوى,3","تقدمت بشكوى,3","بلغت عنهم,4",
+"للجهات المختصة,4","لحماية المستهلك,4","هيئة التجارة,3",
+"شروط مجحفة,3","عقد مجحف,3","بنود تعسفية,3","تعسف,3",
+"انتهاك صريح,4","انتهكوا حقوقي,4","تجاوز حقوقي,4",
+"ليس من حقهم,3","هذا غير مقبول,3","هذا مرفوض,3",
+
+// ─── ENGLISH NEGATIVE ────────────────────────────────────────
+// general
+"bad,2","terrible,3","horrible,3","awful,3","dreadful,3","atrocious,4",
+"appalling,4","abysmal,4","pathetic,3","deplorable,4","disgraceful,4",
+"shameful,3","shameless,3","embarrassing,3","laughable,3","ridiculous,3",
+"absurd,2","nonsense,2","trash,3","garbage,3","junk,3","worthless,4",
+"useless,3","pointless,3","hopeless,3","incompetent,3","unprofessional,3",
+"amateur,2","amateurish,3","sloppy,2","shoddy,3","subpar,3",
+"substandard,3","inferior,3","poor,2","lousy,3","crappy,3",
+"mediocre,2","lackluster,2","uninspired,2","bland,2","boring,1",
+"dull,1","tedious,2","monotonous,2","disappointing,3","underwhelming,3",
+"below average,3","below standard,3","not up to standard,3",
+"lacking,2","insufficient,2","inadequate,2","unsatisfactory,3",
+"unsatisfied,2","dissatisfied,3","displeased,2","unimpressed,2",
+"unpleasant,2","uncomfortable,2","inconvenient,2","problematic,2",
+
+// worst
+"worst,4","absolute worst,5","the worst,4","by far the worst,5",
+"hands down the worst,5","rock bottom,4","0 stars,5","zero stars,5",
+"1 star,4","one star,4","1/10,4","0/10,5","wouldn't recommend,3",
+"do not recommend,3","don't recommend,3","avoid,3","stay away,3",
+"steer clear,3","run away,3","never again,4","never buy,3",
+"won't buy again,3","won't use again,3","won't be back,3",
+"last time,2","don't waste your money,4","save your money,3",
+"don't bother,3","not worth your time,3","not worth your money,4",
+"buyer beware,4","be warned,4","warning,2","red flag,3",
+"red flags,3","major red flag,4",
+
+// emotions
+"hate,3","hated,3","despise,4","loathe,4","detest,4","disgusting,4",
+"disgust,3","revolting,4","repulsive,4","nauseating,3","sickening,3",
+"infuriating,3","frustrating,3","frustration,2","annoying,2",
+"irritating,2","aggravating,3","maddening,3","disappointing,3",
+"disappointed,3","disappointment,3","let down,3","heartbroken,3",
+"devastated,4","furious,3","angry,2","outraged,3","upset,2",
+"unhappy,2","miserable,3","depressed,2","distressed,2",
+"disheartened,3","crushed,3","gutted,3","distraught,3",
+"demoralizing,3","demeaning,3","patronizing,3","belittling,3",
+"humiliating,3","degrading,3","insulting,3","offensive,3",
+"disrespectful,3","inconsiderate,2","negligent,3","negligence,3",
+"careless,2","reckless,3","irresponsible,3","total disappointment,4",
+"complete let down,4","utter disappointment,4","huge disappointment,4",
+"greatest disappointment,5","worst purchase ever,5","biggest mistake,4",
+"worst decision,4",
+
+// fraud
+"scam,5","fraud,5","fraudulent,5","con,4","rip-off,4","ripoff,4",
+"ripped off,4","overcharged,3","overpriced,3","robbery,4",
+"highway robbery,4","daylight robbery,4","theft,4","deceptive,4",
+"misleading,3","dishonest,3","untrustworthy,3","unreliable,3",
+"unethical,4","illegal,4","corrupt,4","corruption,4","manipulative,3",
+"false advertising,4","false promises,4","broken promises,3",
+"not as advertised,3","not as described,3","bait and switch,4",
+"false claims,4","unauthorized charge,5","charged without consent,5",
+"stole my money,5","hidden charges,4","surprise charges,4",
+"undisclosed fees,4","double charged,4","charged twice,4",
+"billing error,3","incorrect charge,3","overcharged me,3",
+
+// technical
+"broken,3","not working,3","doesn't work,3","stopped working,3",
+"crashed,3","crash,2","error,2","bug,2","glitch,2","lag,2",
+"lagging,2","laggy,2","slow,2","sluggish,2","unresponsive,3",
+"frozen,2","won't load,2","fails,2","fail,2","failure,3",
+"malfunction,3","defective,3","faulty,3","damaged,2","broken down,3",
+"out of order,3","not functional,3","non-functional,3","epic fail,4",
+"complete failure,4","total failure,4","utter failure,4",
+"absolute disaster,5","complete disaster,5","fiasco,4","catastrophic,4",
+"catastrophe,4","debacle,4","shambles,3","mess,2","chaotic,2",
+"disorganized,2","poorly made,3","cheaply made,3","falls apart,3",
+"broke immediately,3","stopped working after,3","defective product,3",
+"arrived damaged,3","arrived broken,3","arrived defective,3",
+"missing pieces,3","missing parts,3","incomplete order,3",
+"wrong item sent,3","nothing like the picture,4",
+"nothing like described,4","completely different,3",
+
+// service
+"rude,3","condescending,3","dismissive,3","inattentive,2",
+"uncaring,2","unhelpful,3","incompetent staff,4","bad service,4",
+"terrible service,5","horrible service,5","awful service,5",
+"poor service,4","worst service,5","no support,3","no help,2",
+"ignored,3","disrespected,3","never responded,3","no response,3",
+"ignored my,3","impossible to reach,3","can't get through,3",
+"on hold forever,3","transferred multiple times,3",
+"nobody could help,3","passed around,3","refused to help,3",
+
+// delay
+"delayed,2","delay,2","late,1","too late,2","overdue,2",
+"waited forever,3","waiting forever,3","took too long,2",
+"endless wait,3","no-show,3","ghosted,3","still waiting,2",
+"been waiting,2","waited hours,3","waited days,3","waited weeks,3",
+"waited months,4","never resolved,3","still not resolved,3",
+"unresolved,2","closed my ticket,3","closed without resolving,4",
+
+// price & value
+"expensive,2","overpriced,3","outrageous price,4","ridiculous price,3",
+"absurd price,3","insane price,3","astronomical,3","extortionate,4",
+"price gouging,4","not worth the price,3","not worth the money,3",
+"total ripoff,4","not worth it,3","not worth,3","total waste,4",
+"complete waste,4","utter waste,4","unacceptable,3","inexcusable,3",
+"unforgivable,4",
+
+// regret
+"regret,3","regretted,3","regrettable,3","waste of money,4",
+"waste of time,4","wasted,3","wasted money,4","wasted time,4",
+"regretting,3","made a mistake,2","should have known,2",
+"wish i hadn't,3","wish i never,3","should not have,3",
+"asked for refund,3","demanded refund,3","couldn't get refund,4",
+"refused refund,4","lost my money,4","wasted my money,4",
+"too many problems,3","constant problems,3","endless problems,4",
+"problem after problem,4","issue after issue,3",
+"bait and switch tactics,4","wrong information,2",
+"incorrect information,2","contradictory information,3",
+"changed their story,3",
+]};
+
+// ═══════════════════════════════════════════════════════════════
+// PARSE DICTIONARY
+// ═══════════════════════════════════════════════════════════════
+const POS=[],NEG=[];
+D.p.forEach(e=>{const i=e.lastIndexOf(',');POS.push({w:e.slice(0,i),wt:+e.slice(i+1)})});
+D.n.forEach(e=>{const i=e.lastIndexOf(',');NEG.push({w:e.slice(0,i),wt:+e.slice(i+1)})});
+
+// ═══════════════════════════════════════════════════════════════
+// NEGATIONS & AMPLIFIERS
+// ═══════════════════════════════════════════════════════════════
+const NEGS=[
+"not","no","never","isn't","wasn't","aren't","don't","doesn't","didn't",
+"can't","cannot","couldn't","wouldn't","shouldn't","won't","without",
+"barely","hardly","scarcely","rarely","seldom","neither","nor","nothing",
+"nobody","nowhere","none","lack","lacking","lacks","absent","absence",
+"free from","devoid","far from","not at all","not really","not even",
+"مو","ما","لا","مش","مب","مو من","لم","ليس","ليست","لن","غير","دون",
+"بدون","بلا","بغير","ما هو","مافي","ما في","مو هو","مو هي","لا يوجد",
+"لا توجد","لم يكن","لم تكن","لم يعد","لم تعد","لن يكون","لن تكون",
+"لا أعتقد","لا أظن","لا أرى","لا أحس","لم أشعر","لم أجد","لم ألاحظ",
+"لم أرى","لم يقدم","لم يوفر","لم يتحقق","لم يتم","لم يصل",
+"أبداً","قط","إطلاقاً","أبدا","على الإطلاق",
+];
+
+const AMPS=[
+"جداً","جدا","جداً جداً","جدا جدا","كثير","وايد","أوي","جداً أوي",
+"كثيراً","للغاية","بشدة","بقوة","تماماً","تماما","مطلقاً","مطلقا",
+"بالكامل","أكثر من","أكثر بكثير","بكثير","بمراحل","بفارق كبير",
+"بامتياز","بجدارة","حقاً","فعلاً","صراحة","بصراحة","والله العظيم",
+"من القلب","بكل صدق","فوق العادة","خارج التوقعات","لا يصدق",
+"very","really","so","extremely","absolutely","totally","completely",
+"utterly","incredibly","insanely","unbelievably","remarkably",
+"extraordinarily","exceptionally","genuinely","truly","deeply",
+"profoundly","intensely","highly","super","ultra","mega","beyond",
+"way","far","much","greatly","immensely","enormously","overwhelmingly",
+"undeniably","undoubtedly","without question","by far","hands down",
+"without a doubt","100%","100 percent","more than","over the top",
+"off the charts","through the roof","out of this world","to the max",
+];
+
+// ═══════════════════════════════════════════════════════════════
+// CORE ENGINE v4.0
+// ═══════════════════════════════════════════════════════════════
+function analyze(raw){
+  const txt=raw.toLowerCase();
+  let posScore=0,negScore=0;
+  const hPos=[],hNeg=[],negated=[],amped=[];
+
+  function process(list,isPos){
+    list.forEach(({w,wt})=>{
+      // Find all occurrences
+      let idx=txt.indexOf(w);
+      while(idx!==-1){
+        // Word boundary check
+        const b1=idx>0?txt[idx-1]:' ';
+        const a1=idx+w.length<txt.length?txt[idx+w.length]:' ';
+        const boundary=!/[a-zA-Z\u0600-\u06FF]/.test(b1)&&!/[a-zA-Z\u0600-\u06FF]/.test(a1);
+        if(boundary){
+          const win=txt.slice(Math.max(0,idx-30),idx);
+          const sur=txt.slice(Math.max(0,idx-20),idx+w.length+20);
+          const isNeg=NEGS.some(n=>win.indexOf(n)!==-1);
+          const isAmp=AMPS.some(a=>sur.indexOf(a)!==-1);
+          const fw=isAmp?Math.min(wt*2,5):wt;
+          if(isAmp&&!amped.includes(w))amped.push(w);
+          if(isNeg){
+            if(!negated.includes(w))negated.push(w);
+            if(isPos){negScore+=fw;if(!hNeg.includes(w))hNeg.push(w);}
+            else{posScore+=fw;if(!hPos.includes(w))hPos.push(w);}
+          }else{
+            if(isPos){posScore+=fw;if(!hPos.includes(w))hPos.push(w);}
+            else{negScore+=fw;if(!hNeg.includes(w))hNeg.push(w);}
+          }
+        }
+        idx=txt.indexOf(w,idx+1);
+      }
     });
+  }
+  process(POS,true);
+  process(NEG,false);
 
-    if (!response.ok) throw new Error('HTTP ' + response.status);
+  const net=posScore-negScore;
+  const total=posScore+negScore;
+  let sent='Neutral';
+  if(net>0)sent='Positive';
+  if(net<0)sent='Negative';
 
-    const data = await response.json();
-    const a    = data.analysis_result;
-    const d    = data.deep_analysis;
+  // Confidence
+  let conf='N/A',confPct=0;
+  if(total>0){
+    const d=Math.abs(net)/total;
+    if(d>=0.85&&total>=10){conf='عالية جداً';confPct=100;}
+    else if(d>=0.70&&total>=6){conf='عالية';confPct=80;}
+    else if(d>=0.50&&total>=4){conf='متوسطة-عالية';confPct=60;}
+    else if(d>=0.35||total>=3){conf='متوسطة';confPct=40;}
+    else{conf='منخفضة';confPct=20;}
+  }
 
-    renderResult({
-      sentiment : a.sentiment,
-      confidence: a.confidence,
-      score     : parseInt(a.overall_score) || 0,
-      posScore  : parseInt(d.pos_score)     || 0,
-      negScore  : parseInt(d.neg_score)     || 0,
-      keywords  : d.detected_keywords       || ''
-    });
+  // Intensity
+  const abs=Math.abs(net);
+  let intensity='خفيف';
+  if(abs>=16)intensity='أقصى درجة';
+  else if(abs>=10)intensity='شديد جداً';
+  else if(abs>=6)intensity='شديد';
+  else if(abs>=3)intensity='متوسط';
+  else if(abs>=1)intensity='خفيف';
 
-  } catch (err) {
-    console.error(err);
-    showToast('خطأ في الاتصال — تأكد من تشغيل CORS والـ API Key');
-  } finally {
-    btn.disabled = false;
-    loading.classList.remove('active');
+  // Language detect
+  const arC=(raw.match(/[\u0600-\u06FF]/g)||[]).length;
+  const enC=(raw.match(/[a-zA-Z]/g)||[]).length;
+  let lang='—';
+  if(arC>0&&enC>0)lang='عربي + إنجليزي';
+  else if(arC>enC)lang='عربي';
+  else if(enC>arC)lang='إنجليزي';
+
+  return{sent,net,posScore,negScore,total,conf,confPct,intensity,lang,
+    hPos,hNeg,negated,amped,all:[...hPos,...hNeg]};
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function onInp(){
+  const t=document.getElementById('inp'),n=Math.min(t.value.length,1000);
+  document.getElementById('cc').textContent=n+' / 1000';
+  if(t.value.length>1000)t.value=t.value.slice(0,1000);
+}
+function onKey(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter')run();}
+
+function toast(m){
+  const el=document.getElementById('tst');
+  document.getElementById('tm').textContent=m;
+  el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),3500);
+}
+
+function bar(id,cls,pct,isD){
+  const el=document.getElementById(id);
+  if(cls)el.className='fil '+cls;
+  else el.className='dfl '+(isD?'pf':'nf');
+  setTimeout(()=>{el.style.width=Math.max(pct,2)+'%';},60);
+}
+
+function pips(confPct){
+  const c=document.getElementById('cpips');
+  c.innerHTML='';
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');
+    d.className='cpip'+(i<Math.round(confPct/10)?' on':'');
+    c.appendChild(d);
   }
 }
 
-// ── Render Result ──
-function renderResult({ sentiment, confidence, score, posScore, negScore, keywords }) {
-  const resultDiv = document.getElementById('result');
-  resultDiv.classList.add('visible');
+const EMOJI={Positive:'😊',Negative:'😞',Neutral:'😐'};
+const LABEL={Positive:'إيجابي',Negative:'سلبي',Neutral:'محايد'};
 
-  // Emoji map
-  const emojiMap = { Positive: '😊', Negative: '😞', Neutral: '😐' };
-  const labelMap = { Positive: 'إيجابي', Negative: 'سلبي', Neutral: 'محايد' };
+function render(r,src){
+  document.getElementById('res').classList.add('on');
 
   // Banner
-  const banner = document.getElementById('sentimentBanner');
-  banner.className = 'sentiment-banner ' + sentiment;
-  document.getElementById('bannerValue').textContent = labelMap[sentiment] || sentiment;
-  document.getElementById('bannerValue').className   = 'banner-value ' + sentiment;
-  document.getElementById('bannerEmoji').textContent = emojiMap[sentiment] || '🔍';
+  const b=document.getElementById('bnr');
+  b.className='bnr '+r.sent;
+  const m=document.getElementById('bm');
+  m.textContent=LABEL[r.sent]||r.sent;
+  m.className='bmain '+r.sent;
+  document.getElementById('bi').textContent=EMOJI[r.sent]||'🔍';
+  document.getElementById('be').textContent=r.sent;
 
-  // Score bar
-  document.getElementById('scoreDisplay').textContent = (score >= 0 ? '+' : '') + score;
-  const bar = document.getElementById('barFill');
-  bar.className = 'bar-fill ' + sentiment;
-  const total = posScore + negScore;
-  const pct   = total > 0 ? Math.round((Math.max(posScore, negScore) / total) * 100) : 50;
-  setTimeout(() => { bar.style.width = pct + '%'; }, 50);
-
-  // Stats
-  document.getElementById('statPos').textContent = '+' + posScore;
-  document.getElementById('statNeg').textContent = '-' + negScore;
-  const net = posScore - negScore;
-  document.getElementById('statNet').textContent = (net >= 0 ? '+' : '') + net;
-
-  // Keywords
-  const tagsEl = document.getElementById('kwTags');
-  tagsEl.innerHTML = '';
-  if (keywords) {
-    const items = keywords.split(',').map(s => s.trim()).filter(Boolean);
-    if (items.length) {
-      items.forEach((word, i) => {
-        const tag = document.createElement('span');
-        const cls = sentiment === 'Positive' ? 'pos' : sentiment === 'Negative' ? 'neg' : 'pos';
-        tag.className = 'kw-tag ' + cls;
-        tag.style.animationDelay = (i * 0.06) + 's';
-        tag.textContent = word;
-        tagsEl.appendChild(tag);
-      });
-    } else {
-      tagsEl.innerHTML = '<span class="kw-empty">لم يتم اكتشاف كلمات مفتاحية</span>';
-    }
-  } else {
-    tagsEl.innerHTML = '<span class="kw-empty">لم يتم اكتشاف كلمات مفتاحية</span>';
+  // Intensity + lang badges
+  const row=document.getElementById('intRow');
+  row.innerHTML='';
+  const ic=r.sent==='Positive'?'int-pos':r.sent==='Negative'?'int-neg':'int-neu';
+  const b1=document.createElement('span');
+  b1.className='int-badge '+ic;
+  b1.textContent=r.intensity;
+  row.appendChild(b1);
+  if(r.lang!=='—'){
+    const b2=document.createElement('span');
+    b2.className='int-badge int-lang';
+    b2.textContent=r.lang;
+    row.appendChild(b2);
+  }
+  if(r.amped.length){
+    const b3=document.createElement('span');
+    b3.className='int-badge int-lang';
+    b3.textContent='مضخّم';
+    row.appendChild(b3);
+  }
+  if(r.negated.length){
+    const b4=document.createElement('span');
+    b4.className='int-badge int-neg';
+    b4.textContent='نفي مكتشف';
+    row.appendChild(b4);
   }
 
-  // Confidence pips
-  const confMap = { 'High': 5, 'Medium': 3, 'Low': 1, 'N/A': 0 };
-  const confLabelAr = { 'High': 'عالية', 'Medium': 'متوسطة', 'Low': 'منخفضة', 'N/A': 'غير محدد' };
-  const filled = confMap[confidence] ?? 0;
-  const pips   = document.querySelectorAll('.conf-pip');
-  pips.forEach((p, i) => {
-    p.classList.toggle('filled', i < filled);
+  // Alerts
+  const na=document.getElementById('na');
+  if(r.negated.length){
+    na.classList.add('on');
+    document.getElementById('nat').textContent=
+      'تم اكتشاف نفي: '+r.negated.slice(0,4).join('، ')+' — عُكست في الحساب';
+  }else na.classList.remove('on');
+
+  const aa=document.getElementById('aa');
+  if(r.amped.length){
+    aa.classList.add('on');
+    document.getElementById('aat').textContent=
+      'تضخيم مكتشف: '+[...new Set(r.amped)].slice(0,4).join('، ')+' — الأوزان مضاعفة';
+  }else aa.classList.remove('on');
+
+  // Score
+  document.getElementById('sv').textContent=(r.net>=0?'+':'')+r.net;
+  const pct=Math.min(Math.abs(r.net)*4+15,100);
+  bar('fb',r.sent,pct);
+
+  // Dual bars
+  const tot=r.posScore+r.negScore;
+  const pp=tot>0?Math.round(r.posScore/tot*100):0;
+  const np=tot>0?Math.round(r.negScore/tot*100):0;
+  bar('pb',null,pp,true);
+  bar('nb',null,np,false);
+  document.getElementById('pn').textContent='+'+r.posScore;
+  document.getElementById('nn').textContent='-'+r.negScore;
+
+  // Stats
+  document.getElementById('snet').textContent=(r.net>=0?'+':'')+r.net;
+  document.getElementById('spos').textContent='+'+r.posScore;
+  document.getElementById('sneg').textContent='-'+r.negScore;
+  document.getElementById('swds').textContent=r.all.length;
+
+  // Confidence
+  pips(r.confPct);
+  document.getElementById('cv').textContent=r.conf;
+
+  // Keywords
+  const kt=document.getElementById('kwt');
+  kt.innerHTML='';
+  const uniq=[...new Set(r.all)].slice(0,35);
+  document.getElementById('kwc').textContent=uniq.length;
+  if(!uniq.length){kt.innerHTML='<span class="kwe">لم يتم اكتشاف كلمات</span>';return;}
+  uniq.forEach((w,i)=>{
+    const t=document.createElement('span');
+    const isNeg=r.hNeg.includes(w)&&!r.negated.includes(w);
+    t.className='kwg '+(isNeg?'n':'p')+(r.negated.includes(w)?' rv':'');
+    t.style.animationDelay=(i*.04)+'s';
+    t.textContent=w;
+    kt.appendChild(t);
   });
-  document.getElementById('confText').textContent = confLabelAr[confidence] || confidence;
+
+  // Details
+  document.getElementById('dn').textContent=r.negated.length
+    ?'✓ '+r.negated.slice(0,3).join('، '):'✗ لا يوجد';
+  document.getElementById('da').textContent=r.amped.length
+    ?'✓ '+[...new Set(r.amped)].slice(0,3).join('، '):'✗ لا يوجد';
+  document.getElementById('dl').textContent=r.lang;
+  document.getElementById('ds').textContent=src;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════
+async function run(){
+  const txt=document.getElementById('inp').value.trim();
+  if(!txt){toast('الرجاء إدخال نص للتحليل');return;}
+  const btn=document.getElementById('btn'),ld=document.getElementById('ld'),
+        res=document.getElementById('res');
+  btn.disabled=true;
+  ld.classList.add('on');
+  res.classList.remove('on');
+
+  const local=analyze(txt);
+
+  const hdrs=new Headers();
+  hdrs.append("Content-Type","application/json");
+  hdrs.append("x-apikey","fzXhoJL9X8Ov4tGcKp61c01hcbRZefi9eRbcS7l6GbLIFJAQ");
+  let api=null;
+  try{
+    const r=await fetch("https://api-dev-isolution.xyz/v1/ai",
+      {method:'POST',headers:hdrs,body:JSON.stringify({text:txt}),redirect:'follow'});
+    if(r.ok){
+      const d=await r.json();
+      api={
+        sent:d.analysis_result.sentiment,
+        conf:d.analysis_result.confidence,
+        score:parseInt(d.analysis_result.overall_score)||0,
+        posScore:parseInt(d.deep_analysis.pos_score)||0,
+        negScore:parseInt(d.deep_analysis.neg_score)||0,
+        keywords:d.deep_analysis.detected_keywords||'',
+      };
+    }
+  }catch(_){}
+
+  ld.classList.remove('on');
+  btn.disabled=false;
+
+  if(api){
+    // Merge API + local
+    const merged={...local};
+    merged.sent=api.sent||local.sent;
+    merged.net=api.score||local.net;
+    merged.posScore=api.posScore||local.posScore;
+    merged.negScore=api.negScore||local.negScore;
+    if(api.keywords){
+      const kws=api.keywords.split(',').map(s=>s.trim()).filter(Boolean);
+      merged.all=[...new Set([...kws,...local.all])];
+    }
+    const confMap={'High':80,'Medium':50,'Low':20,'N/A':0};
+    merged.confPct=confMap[api.conf]??local.confPct;
+    merged.conf=({'High':'عالية','Medium':'متوسطة','Low':'منخفضة'})[api.conf]||local.conf;
+    render(merged,'API + Local');
+  }else{
+    render(local,'Local Engine');
+  }
 }
 </script>
 </body>
